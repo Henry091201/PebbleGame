@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Bag{
 
@@ -35,5 +36,21 @@ public class Bag{
     public static ArrayList<Bag> getWhiteBags(){
         return whiteBags;
     }
-
+    public static int getSize(Bag bagArrayList){
+        return bagArrayList.getPebbles().size();
+    }
+    public static void removePebble(Bag bag, Pebble pebble){
+        bag.getPebbles().remove(pebble);
+    }
+    public char getBagLetter(){
+        return letter;
+    }
+    public static void bagFill(Bag whitebag, Bag blackbag){
+        //Loop over every pebble in whitebag
+        for(Pebble pebble:whitebag.getPebbles()){
+            blackbag.addPebble(pebble);
+        }
+        //clear white bag arraylist
+        whitebag.getPebbles().clear();
+    }
 }
