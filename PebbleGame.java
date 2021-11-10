@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -207,8 +208,25 @@ public class PebbleGame {
             // input the file
             System.out.println("Please enter the location of bag number " + i + " to load:");
             String filename = input.next();
+
+            File file = new File(filename);
+
+            // checks if the file is in the directory
+            while(!file.exists()) {
+                // input the file
+                System.out.println("This file is not in the directory!");
+                System.out.println("Please enter the location of bag number " + i + " to load:");
+                filename = input.next();
+
+                file = new File(filename);
+                if(file.exists()) {
+                    break;
+                }
+            }
+
             // store the weights
             String[] weights = null;
+
             weights = PebbleGame.addFile(filename);
 
             // fill the bag with the weights only if the file was validated correctly
@@ -251,19 +269,32 @@ public class PebbleGame {
         Bag.setWhiteBags(new Bag("white", 'C'));
     }
     public static void setupPlayers(){
-        //input the amount of players
+        //input the amount of player
+
         System.out.println("Please enter the number of players:");
-        int number = input.nextInt();
-        // Checks the input is strictly positive
-        while(number < 1){
-            System.out.println("Error: Number of players must be strictly positive. Please retry");
-            number = input.nextInt();
+
+        if(input.hasNextInt()){
+            int number = input.nextInt();
+            // Checks the input is strictly positive
+            while(number < 1){
+                System.out.println("Error: Number of players must be strictly positive. Please retry");
+                number = input.nextInt();
+            }
+            // create the number of players as inputted and add them to the list of players
+            for(int i=0; i<number; i++) {
+                PebbleGame.addPlayer(i);
+            }
+            output = new String[number]; // Set the output array to the amount of players
+        }else {
+            input.nextLine();
+            System.out.println("Please enter a number");
+            setupPlayers();
+
         }
-        // create the number of players as inputted and add them to the list of players
-        for(int i=0; i<number; i++) {
-            PebbleGame.addPlayer(i);
-        }
-        output = new String[number]; // Set the output array to the amount of players
+
+
+
+
     }
 
 
