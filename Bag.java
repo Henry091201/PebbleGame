@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Bag{
@@ -11,44 +9,47 @@ public class Bag{
     private String colour;
     private char letter;
 
+    // Constructor
     public Bag(String colour, char letter){
         this.colour = colour;
         this.letter = letter;
     }
 
+    // adds the pebble
     public void addPebble(Pebble pebble) {
         pebbles.add(pebble);
     }
+    // returns the arraylist of pebbles contained within the bag
     public CopyOnWriteArrayList<Pebble> getPebbles(){
         return pebbles;
     }
+    // set the static black bags
     public static void setBlackBags(Bag bag){
         blackBags.add(bag);
     }
+    // sets the static white bags
     public static void setWhiteBags(Bag bag){
         whiteBags.add(bag);
     }
+    // returns the black bags
     public static CopyOnWriteArrayList<Bag> getBlackBags(){
         return blackBags;
     }
+    // returns the white bags
     public static CopyOnWriteArrayList<Bag> getWhiteBags(){
         return whiteBags;
     }
+    // returns the amount of pebbles the bag contains
     public static int getSize(Bag bagArrayList){
         return bagArrayList.getPebbles().size();
     }
+    // removes a certain pebble from the bag
     public static void removePebble(Bag bag, Pebble pebble){
         bag.getPebbles().remove(pebble);
     }
+    // getter method for the letter
     public char getBagLetter(){
         return letter;
     }
-    public static void bagFill(Bag whitebag, Bag blackbag){
-        //Loop over every pebble in whitebag
-        for(Pebble pebble:whitebag.getPebbles()){
-            blackbag.addPebble(pebble);
-        }
-        //clear white bag arraylist
-        whitebag.getPebbles().clear();
-    }
+
 }
