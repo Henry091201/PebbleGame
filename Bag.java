@@ -1,15 +1,14 @@
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Bag{
 
     //Arraylist containing the pebbles
-    private ArrayList<Pebble> pebbles = new ArrayList<>();
-    private static ArrayList<Bag> blackBags = new ArrayList<>();
-    private static ArrayList<Bag> whiteBags = new ArrayList<>();
-    //Type of bag it is
+    private volatile CopyOnWriteArrayList<Pebble> pebbles = new CopyOnWriteArrayList<>();
+    private volatile static CopyOnWriteArrayList<Bag> blackBags = new CopyOnWriteArrayList<>();
+    private volatile static CopyOnWriteArrayList<Bag> whiteBags = new CopyOnWriteArrayList<>();
     private String colour;
-    //Letter that the bag is
     private char letter;
 
     public Bag(String colour, char letter){
@@ -20,8 +19,7 @@ public class Bag{
     public void addPebble(Pebble pebble) {
         pebbles.add(pebble);
     }
-
-    public ArrayList<Pebble> getPebbles(){
+    public CopyOnWriteArrayList<Pebble> getPebbles(){
         return pebbles;
     }
     public static void setBlackBags(Bag bag){
@@ -30,10 +28,10 @@ public class Bag{
     public static void setWhiteBags(Bag bag){
         whiteBags.add(bag);
     }
-    public static ArrayList<Bag> getBlackBags(){
+    public static CopyOnWriteArrayList<Bag> getBlackBags(){
         return blackBags;
     }
-    public static ArrayList<Bag> getWhiteBags(){
+    public static CopyOnWriteArrayList<Bag> getWhiteBags(){
         return whiteBags;
     }
     public static int getSize(Bag bagArrayList){
