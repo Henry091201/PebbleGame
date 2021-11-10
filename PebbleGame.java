@@ -75,7 +75,7 @@ public class PebbleGame {
             Bag blackBagObj = Bag.getBlackBags().get(bagNum);
             Bag whiteBagObj = Bag.getWhiteBags().get(bagNum);
             CopyOnWriteArrayList<Pebble> blackBag = new CopyOnWriteArrayList<>();
-            while(true){
+            while(true){        //Checks if a bag is empty before drawing
                 blackBag = Bag.getBlackBags().get(bagNum).getPebbles();
                 CopyOnWriteArrayList<Pebble> whiteBag = Bag.getWhiteBags().get(bagNum).getPebbles();
                 if(blackBag.size() == 0){
@@ -86,13 +86,11 @@ public class PebbleGame {
                 }
                 else {break;}
             }
-
-            synchronized (blackBag){
+            synchronized (blackBag){    //In case you try and draw from an empty bag
                 if(blackBag.size() < 1){
                     draw();
                 }
                 int pebbleIndex = ThreadLocalRandom.current().nextInt(0, blackBag.size());
-
                 //remove random pebble from black bag: sync
                 Pebble chosenPebble = blackBag.get(pebbleIndex);  //select the pebble
                 blackBag.remove(chosenPebble);   //remove the pebble from black bag
@@ -283,22 +281,35 @@ public class PebbleGame {
         System.out.println("Please enter the number of players:");
 
         if(input.hasNextInt()){
-            int number = input.nextInt();
-            // Checks the input is strictly positive
-            while(number < 1){
-                System.out.println("Error: Number of players must be strictly positive. Please retry");
-                number = input.nextInt();
+            try{
+                int number = input.nextInt();
+                // Checks the input is strictly positive
+                while(number < 1){
+                    System.out.println("Error: Number of players must be strictly positive. Please retry");
+                    number = input.nextInt();
+                }
+                // create the number of players as inputted and add them to the list of players
+                for(int i=0; i<number; i++) {
+                    PebbleGame.addPlayer(i);
+                }
+                output = new String[number]; // Set the output array to the amount of players
+            }catch (InputMismatchException e){
+                input.nextLine();
+                System.out.println("Please only enter numbers ");
+                setupPlayers();
             }
-            // create the number of players as inputted and add them to the list of players
-            for(int i=0; i<number; i++) {
-                PebbleGame.addPlayer(i);
-            }
-            output = new String[number]; // Set the output array to the amount of players
-        }else {
-            input.nextLine();
-            System.out.println("Please enter a number");
-            setupPlayers();
 
+        }else {
+            if(input.hasNext()){
+                String err = input.nextLine();
+                if(err.equals("E")){
+                    System.out.println("Quitting");
+                    System.exit(0);
+                }else {
+                    System.out.println("Please enter a number");
+                    setupPlayers();
+                }
+            }
         }
 
     }
@@ -338,33 +349,17 @@ public class PebbleGame {
         }
     }
     public static void main(String[] args) throws IOException {
-        // Pre threading
-        /**
-         * To-Do:
-         * Strictly positive number of players :)
-         * Three white bads A,B,C :)    yes
-         * Three black bags X,Y,Z :)    yes
-         *
-         * Request the number of players ---> Err: Players are greater than 0   yes
-         * Request the location of the 3 Files ---> Err: Correct file type      no
-         * Validate the 3 files ---> In the right format, only contains integers, each bag contains 11 times the number of players  yes
-         */
 
         // Creates the white and Black Bags
         setupBags();
-
-
         System.out.println("\nWelcome to the PebbleGame!!");
         System.out.println("You will be asked to enter the number of players.");
         System.out.println("and then for the location of three files in turn containing comma separated integer values for the pebble weights.");
         System.out.println("The integer values must be strictly positive.");
         System.out.println("The game will then be simulated, and written to files in this directory.\n");
-
         // Asks for player number and creates the player objects
-
         setupPlayers();
         askForBags();
-
         // Creates new directory for the outputs
         File dirLocation = new File("Player Outputs/");
         // Removes any old output files
@@ -374,37 +369,21 @@ public class PebbleGame {
             }
         }
 
-
-        //Post Threading - starts before they draw their initial pebbles
-        /**
-         * Each player take 10 pebbles
-         * win condition: player has ten pebbles with weight totalling exactly 100
-         * Once black bag empty, all pebbles from white bag emptied into it. X filled by A, Y by B
-         * Drawing black pebbles is uniformly at random
-         * players act as concurrent threads
-         * Drawing and discarding are atomic actions (cont)
-         * Bag pebble is discarded to is paired to white bag that pebble just came from
-         * If player attempts to draw from empty bag, try again till they select a bag with pebbles
-         */
-
         ExecutorService es = Executors.newFixedThreadPool(Player.players.size());
         for (int i = 0; i < Player.players.size(); i++) {
             Thread player = new Thread(new Player(i));
             es.execute(new Thread(player));
         }
         es.shutdown();
-
-        // Shuts the game down after 1 minute (so that it does not run forever)
         try {
-            es.awaitTermination(60, TimeUnit.SECONDS);
-
-        } catch(InterruptedException e) {
+            es.awaitTermination(120, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         if(!es.isTerminated()){
             es.shutdownNow();
-            System.out.println("The Game has run for a while, it may not be possible to win. \n Shutting Down.");
+            System.out.println("The Game has run for a while, it may not be possible to win. \nShutting Down.");
             System.exit(0);
         }
     }
