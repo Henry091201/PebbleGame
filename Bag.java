@@ -8,9 +8,7 @@ public class Bag{
     private volatile CopyOnWriteArrayList<Pebble> pebbles = new CopyOnWriteArrayList<>();
     private volatile static CopyOnWriteArrayList<Bag> blackBags = new CopyOnWriteArrayList<>();
     private volatile static CopyOnWriteArrayList<Bag> whiteBags = new CopyOnWriteArrayList<>();
-    //Type of bag it is
     private String colour;
-    //Letter that the bag is
     private char letter;
 
     public Bag(String colour, char letter){
@@ -21,7 +19,6 @@ public class Bag{
     public void addPebble(Pebble pebble) {
         pebbles.add(pebble);
     }
-
     public CopyOnWriteArrayList<Pebble> getPebbles(){
         return pebbles;
     }

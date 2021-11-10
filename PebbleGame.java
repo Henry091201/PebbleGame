@@ -16,9 +16,6 @@ public class PebbleGame {
     public static String[] output;  //Where each players output will be written to
     private  volatile static boolean gameWon;
 
-
-
-    //Should have a nested player class
     public static class Player implements Runnable{
 
         private static final CopyOnWriteArrayList<Player> players = new CopyOnWriteArrayList<>();
@@ -26,7 +23,7 @@ public class PebbleGame {
         private  volatile ArrayList<Pebble> pebbleArrayList = new ArrayList<>();
         private int runningTotal;
         private volatile Bag lastBag; // The bag where the last draw came from
-        private volatile CopyOnWriteArrayList<Pebble> whiteBag = new CopyOnWriteArrayList<>();
+
         //constructor
         public Player(int id){
             this.id = id;
@@ -80,7 +77,7 @@ public class PebbleGame {
             CopyOnWriteArrayList<Pebble> blackBag = new CopyOnWriteArrayList<>();
             while(true){
                 blackBag = Bag.getBlackBags().get(bagNum).getPebbles();
-                whiteBag = Bag.getWhiteBags().get(bagNum).getPebbles();
+                CopyOnWriteArrayList<Pebble> whiteBag = Bag.getWhiteBags().get(bagNum).getPebbles();
                 if(blackBag.size() == 0){
                     blackBag.addAll(whiteBag);
                     output[id] = "Filling bag " + blackBagObj.getBagLetter()+ " with bag " +whiteBagObj.getBagLetter() + "\n";
@@ -145,6 +142,7 @@ public class PebbleGame {
 
         public void run(){
             try {
+                System.out.println("Player" + id + " is starting");
                 drawTen();
                 while (!gameWon){
                     discard();
@@ -171,7 +169,7 @@ public class PebbleGame {
      * @return a Str[] containing all the weights of pebbles
      * @throws IOException TODO: Catch it
      */
-    public static String[] addFile(String filename) throws IOException {
+    public static String[] addFile(String filename) {
 
         String line = null;
         BufferedReader bufferedReader = null;
@@ -406,8 +404,7 @@ public class PebbleGame {
 
         if(!es.isTerminated()){
             es.shutdownNow();
-            System.out.println("Game ran for over 1 minute and it may be impossible to simulate it, so" +
-                    "it has been interrupted.");
+            System.out.println("The Game has run for a while, it may not be possible to win. \n Shutting Down.");
             System.exit(0);
         }
     }
