@@ -1,0 +1,132 @@
+Index: PebbleGame.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import java.io.BufferedReader;\nimport java.io.File;\nimport java.io.FileReader;\nimport java.io.IOException;\nimport java.util.ArrayList;\nimport java.util.InputMismatchException;\nimport java.util.NoSuchElementException;\nimport java.util.Scanner;\n\npublic class PebbleGame {\n    public static final Scanner input = new Scanner(System.in);\n\n    //Should have a nested player class\n    public static class Player{\n\n        private static ArrayList<Player> players = new ArrayList<>();\n        private int id;\n        //constructor\n        public Player(int id){\n            this.id = id;\n        }\n\n        //Methods\n        public void addPlayer(int id){players.add(new Player(id));}\n    }\n\n    public static void addPlayer(int id) {\n        PebbleGame.Player.players.add(new Player(id));\n    }\n\n    //Read file Method\n\n    /**\n     * Takes the name of the file for a black bag. Validates the content format with validateWeights method.\n     * Checks there are 11 times the amount of pebbles than players.\n     * @param filename name of black bag input file\n     * @return a Str[] containing all the weights of pebbles\n     * @throws IOException TODO: Catch it\n     */\n    public static String[] addFile(String filename) throws IOException {\n\n        String line = null;\n        BufferedReader bufferedReader = null;\n        String[] weights = null;\n\n        try {\n            //reading the file\n            File file = new File(filename);\n            FileReader fileReader = new FileReader(file);\n            bufferedReader = new BufferedReader(fileReader);\n            // Validate the file content format\n            while ((line = bufferedReader.readLine()) != null){\n                //Validates the file content is in the correct format\n                if(validateWeights(line)){\n                    weights = line.replaceAll(\"\\\\s+\",\"\").split(\",\");\n                }else {\n                    System.out.println(\"The file didn't follow the specified format.\");\n                    return null;\n                }\n            }\n        } catch (IOException e) {\n            e.printStackTrace();\n        } catch(NoSuchElementException e) {\n            e.printStackTrace();\n        } finally {\n            // close the buffered reader\n            //bufferedReader.close();\n        }\n        // Checks if there is 11 times the amount of pebbles than players\n        if(weights.length < 11*Player.players.size()){\n            System.out.println(\"There is not 11 Times the amount of pebbles than players, please input another file\");\n            return null;\n        }\n        return weights;\n    }\n\n    public static void askForBags() throws IOException {\n        ArrayList<Bag> blackBags = Bag.getBlackBags();\n        int i = 0;\n\n        while(i<3) {\n\n            Bag bag = blackBags.get(i);\n\n            // input the file\n            System.out.println(\"Please enter the location of bag number \" + i + \" to load:\");\n            String filename = input.next();\n            // store the weights\n            String[] weights = null;\n            weights = PebbleGame.addFile(filename);\n\n            // fill the bag with the weights only if the file was validated correctly\n            if(weights != null){\n                PebbleGame.fillBag(bag, weights);\n                i++;\n            }\n\n        }\n\n        input.close();\n    }\n\n    /**\n     * Checks the file follows the correct format\n     * @param line\n     * @return Bool. True if follows correct format\n     */\n    public static Boolean validateWeights(String line) {\n        //Checks file content is in the correct format\n        if (line.matches(\"(\\\\d+(,)?\\\\s?)+\")) {\n            return true;\n        }\n        else{\n            return false;\n        }\n    }\n\n    /**\n     * Adds all the white and black bags to the arrays\n     */\n    public static void setupBags(){\n        // Add the black bags to the array\n        Bag.setBlackBags(new Bag(\"black\", 'X'));\n        Bag.setBlackBags(new Bag(\"black\", 'Y'));\n        Bag.setBlackBags(new Bag(\"black\", 'Z'));\n        // Add the white bags to the array\n        Bag.setWhiteBags(new Bag(\"white\", 'A'));\n        Bag.setWhiteBags(new Bag(\"white\", 'B'));\n        Bag.setWhiteBags(new Bag(\"white\", 'C'));\n    }\n    public static void setupPlayers(){\n        //input the amount of players\n        System.out.println(\"Please enter the number of players:\");\n        int number = input.nextInt();\n        // Checks the input is strictly positive\n        while(number < 1){\n            System.out.println(\"Error: Number of players must be strictly positive. Please retry\");\n            number = input.nextInt();\n        }\n        // create the number of players as inputted and add them to the list of players\n        for(int i=0; i<number; i++) {\n            PebbleGame.addPlayer(i);\n        }\n        System.out.println(Player.players);\n    }\n\n\n\n    /**\n     * Takes a bag object and uses a Str[] to fill it with weights\n     * @param bag bag object (should be black)\n     * @param weights String list filled with string type integers separated by commas\n     */\n    public static void fillBag(Bag bag, String[] weights) {\n\n        int weight;\n\n        // iterate through the array\n        for (int i=0; i < weights.length; i++) {\n            weight = Integer.parseInt(weights[i]);\n            if(weight < 1) {\n                throw new RuntimeException(\"The weight must be positive\");\n            }\n            bag.addPebble(new Pebble(weight));\n        }\n    }\n\n    public static void main(String[] args) throws IOException {\n        // Pre threading\n        /**\n         * To-Do:\n         * Strictly positive number of players :)\n         * Three white bads A,B,C :)    yes\n         * Three black bags X,Y,Z :)    yes\n         *\n         * Request the number of players ---> Err: Players are greater than 0   yes\n         * Request the location of the 3 Files ---> Err: Correct file type      no\n         * Validate the 3 files ---> In the right format, only contains integers, each bag contains 11 times the number of players  yes\n         */\n\n        // Creates the white and Black Bags\n        setupBags();\n\n\n        System.out.println(\"\\nWelcome to the PebbleGame!!\");\n        System.out.println(\"You will be asked to enter the number of players.\");\n        System.out.println(\"and then for the location of three files in turn containing comma separated integer values for the pebble weights.\");\n        System.out.println(\"The integer values must be strictly positive.\");\n        System.out.println(\"The game will then be simulated, and written to files in this directory.\\n\");\n\n        // Asks for player number and creates the player objects\n\n        setupPlayers();\n\n        askForBags();\n\n\n        //Post Threading - starts before they draw their initial pebbles\n        /**\n         * Each player take 10 pebbles\n         * win condition: player has ten pebbles with weight totalling exactly 100\n         * Once black bag empty, all pebbles from white bag emptied into it. X filled by A, Y by B\n         * Drawing black pebbles is uniformly at random\n         * players act as concurrent threads\n         * Drawing and discarding are atomic actions (cont)\n         * Bag pebble is discarded to is paired to white bag that pebble just came from\n         * If player attempts to draw from empty bag, try again till they select a bag with pebbles\n         */\n        ArrayList<Bag> blackBags = Bag.getBlackBags();\n        ArrayList<Bag> whiteBags = Bag.getWhiteBags();\n    }\n\n\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PebbleGame.java b/PebbleGame.java
+--- a/PebbleGame.java	(revision 8e347d3599dcc4d2c432816ec392dd8984f985d1)
++++ b/PebbleGame.java	(date 1636406806084)
+@@ -208,6 +208,7 @@
+          */
+         ArrayList<Bag> blackBags = Bag.getBlackBags();
+         ArrayList<Bag> whiteBags = Bag.getWhiteBags();
++
+     }
+ 
+ 
+Index: PebbleGame.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PebbleGame.iml b/PebbleGame.iml
+new file mode 100644
+--- /dev/null	(date 1636377030911)
++++ b/PebbleGame.iml	(date 1636377030911)
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<module type="JAVA_MODULE" version="4">
++  <component name="NewModuleRootManager" inherit-compiler-output="true">
++    <exclude-output />
++    <content url="file://$MODULE_DIR$">
++      <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
++    </content>
++    <orderEntry type="inheritedJdk" />
++    <orderEntry type="sourceFolder" forTests="false" />
++  </component>
++</module>
+\ No newline at end of file
+Index: .idea/modules.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/modules.xml b/.idea/modules.xml
+new file mode 100644
+--- /dev/null	(date 1636377030927)
++++ b/.idea/modules.xml	(date 1636377030927)
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectModuleManager">
++    <modules>
++      <module fileurl="file://$PROJECT_DIR$/PebbleGame.iml" filepath="$PROJECT_DIR$/PebbleGame.iml" />
++    </modules>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+new file mode 100644
+--- /dev/null	(date 1636377030929)
++++ b/.idea/vcs.xml	(date 1636377030929)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="VcsDirectoryMappings">
++    <mapping directory="" vcs="Git" />
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+new file mode 100644
+--- /dev/null	(date 1636377030932)
++++ b/.idea/misc.xml	(date 1636377030932)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectRootManager" version="2" project-jdk-name="openjdk-17" project-jdk-type="JavaSDK">
++    <output url="file://$PROJECT_DIR$/out" />
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/runConfigurations.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/runConfigurations.xml b/.idea/runConfigurations.xml
+new file mode 100644
+--- /dev/null	(date 1636377030934)
++++ b/.idea/runConfigurations.xml	(date 1636377030934)
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="RunConfigurationProducerService">
++    <option name="ignoredProducers">
++      <set>
++        <option value="com.android.tools.idea.compose.preview.runconfiguration.ComposePreviewRunConfigurationProducer" />
++      </set>
++    </option>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/.gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+new file mode 100644
+--- /dev/null	(date 1636377031184)
++++ b/.idea/.gitignore	(date 1636377031184)
+@@ -0,0 +1,8 @@
++# Default ignored files
++/shelf/
++/workspace.xml
++# Editor-based HTTP Client requests
++/httpRequests/
++# Datasource local storage ignored files
++/dataSources/
++/dataSources.local.xml

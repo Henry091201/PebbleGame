@@ -1,0 +1,24 @@
+<changelist name="Uncommitted_changes_before_Update_at_10_11_2021,_20_35_[Changes]" date="1636576518918" recycled="false" toDelete="true">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_11_2021,_20_35_[Changes]/shelved.patch" />
+  <option name="DESCRIPTION" value="Uncommitted changes before Update at 10/11/2021, 20:35 [Changes]" />
+  <binary>
+    <option name="BEFORE_PATH" value="PebbleGame$Player.class" />
+    <option name="AFTER_PATH" value="PebbleGame$Player.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_11_2021,_20_35_[Changes]/PebbleGame$Player.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="Pebble.class" />
+    <option name="AFTER_PATH" value="Pebble.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_11_2021,_20_35_[Changes]/Pebble.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="Bag.class" />
+    <option name="AFTER_PATH" value="Bag.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_11_2021,_20_35_[Changes]/Bag.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="PebbleGame.class" />
+    <option name="AFTER_PATH" value="PebbleGame.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_11_2021,_20_35_[Changes]/PebbleGame.class" />
+  </binary>
+</changelist>

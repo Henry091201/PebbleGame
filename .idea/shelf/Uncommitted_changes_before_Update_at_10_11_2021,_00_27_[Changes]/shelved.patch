@@ -1,0 +1,1591 @@
+Index: Bag.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import java.util.ArrayList;\nimport java.util.Iterator;\n\npublic class Bag{\n\n    //Arraylist containing the pebbles\n    private ArrayList<Pebble> pebbles = new ArrayList<>();\n    private static ArrayList<Bag> blackBags = new ArrayList<>();\n    private static ArrayList<Bag> whiteBags = new ArrayList<>();\n    //Type of bag it is\n    private String colour;\n    //Letter that the bag is\n    private char letter;\n\n    public Bag(String colour, char letter){\n        this.colour = colour;\n        this.letter = letter;\n    }\n\n    public void addPebble(Pebble pebble) {\n        pebbles.add(pebble);\n    }\n\n    public ArrayList<Pebble> getPebbles(){\n        return pebbles;\n    }\n    public static void setBlackBags(Bag bag){\n        blackBags.add(bag);\n    }\n    public static void setWhiteBags(Bag bag){\n        whiteBags.add(bag);\n    }\n    public static ArrayList<Bag> getBlackBags(){\n        return blackBags;\n    }\n    public static ArrayList<Bag> getWhiteBags(){\n        return whiteBags;\n    }\n    public static int getSize(Bag bagArrayList){\n        return bagArrayList.getPebbles().size();\n    }\n    public static void removePebble(Bag bag, Pebble pebble){\n        bag.getPebbles().remove(pebble);\n    }\n    public char getBagLetter(){\n        return letter;\n    }\n    public static void bagFill(Bag whitebag, Bag blackbag){\n        //Loop over every pebble in whitebag\n        for(Pebble pebble:whitebag.getPebbles()){\n            blackbag.addPebble(pebble);\n        }\n        //clear white bag arraylist\n        whitebag.getPebbles().clear();\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Bag.java b/Bag.java
+--- a/Bag.java	(revision 0d1216e965b3b7b43968b892491224bc94886e53)
++++ b/Bag.java	(date 1636503170437)
+@@ -1,5 +1,6 @@
+ import java.util.ArrayList;
+ import java.util.Iterator;
++import java.util.concurrent.locks.*;
+ 
+ public class Bag{
+ 
+@@ -46,11 +47,13 @@
+         return letter;
+     }
+     public static void bagFill(Bag whitebag, Bag blackbag){
++
+         //Loop over every pebble in whitebag
+-        for(Pebble pebble:whitebag.getPebbles()){
+-            blackbag.addPebble(pebble);
+-        }
+-        //clear white bag arraylist
+-        whitebag.getPebbles().clear();
++
++            blackbag.getPebbles().addAll(whitebag.getPebbles());
++            //clear white bag arraylist
++            whitebag.getPebbles().clear();
++
++
+     }
+ }
+Index: PebbleGame.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import java.io.BufferedReader;\nimport java.io.File;\nimport java.io.FileReader;\nimport java.io.IOException;\nimport java.nio.charset.StandardCharsets;\nimport java.nio.file.Files;\nimport java.nio.file.Path;\nimport java.nio.file.Paths;\nimport java.util.*;\nimport java.util.concurrent.ExecutorService;\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.TimeUnit;\n\npublic class PebbleGame {\n    public static final Scanner input = new Scanner(System.in);\n    public static String[] output;  //Where each players output will be written to\n    private  volatile static boolean gameWon;\n\n    //Should have a nested player class\n    public static class Player implements Runnable{\n\n        private static final ArrayList<Player> players = new ArrayList<>();\n        private int id;\n        private ArrayList<Pebble> pebbleArrayList = new ArrayList<>();\n        private int runningTotal;\n        private Bag lastBag; // The bag where the last draw came from\n        //constructor\n        public Player(int id){\n            this.id = id;\n        }\n\n        //Methods\n        public void addPlayer(int id){players.add(new Player(id));}\n\n        public void addPebble(Pebble pebble){\n            pebbleArrayList.add(pebble);\n            runningTotal += pebble.getWeight();\n        }\n        public void removePebble(Pebble pebble){\n            pebbleArrayList.remove(pebble);\n            runningTotal -= pebble.getWeight();\n        }\n        public synchronized void drawTen(){\n\n            Pebble chosenPebble;\n\n            //pick a random black bag\n            Random rand = new Random();\n            int bagNumber = rand.nextInt(3);\n            Bag blackBag = Bag.getBlackBags().get(bagNumber);   // Picks the random black bag\n            while(blackBag.getPebbles().size() < 10){           //Loops until it finds a black bag with enough pebbles in\n                bagNumber = rand.nextInt(3);\n                blackBag = Bag.getBlackBags().get(bagNumber);\n            }\n\n            for(int i = 0; i < 10; i++){        // Select the ten pebbles randomly\n                synchronized (blackBag){\n                    chosenPebble = blackBag.getPebbles().get(rand.nextInt(Bag.getSize(blackBag)));  //select the pebble\n                    Bag.removePebble(blackBag, chosenPebble);   //remove the pebble from black bag\n                }\n                addPebble(chosenPebble); // adds pebble to player\n                lastBag = blackBag;\n                output[id] += \"player\" + id + \" has drawn a \"+ chosenPebble.getWeight() + \"from bag \"+blackBag.getBagLetter() + '\\n';\n                output[id] += \"player\" + id+\" hand is \" + pebbleArrayList.toString() + \"\\n\";\n            }\n            checkWin();\n        }\n        public void draw(){\n            // Randomly pick black bag\n            Pebble chosenPebble;\n            Random rand = new Random();\n            int bagNumber = rand.nextInt(3);\n            Bag blackBag = Bag.getBlackBags().get(bagNumber);\n            System.out.println(blackBag.getBagLetter());\n            // Check if empty: yes --> fill corresponding; no --> draw pebble\n               while(true) {//in case there are more than 1 empty bag at the same time\n                   if (blackBag.getPebbles().size() == 0) {\n                       System.out.println(blackBag.getPebbles().size());\n                       synchronized (this) {\n                           Bag.bagFill(Bag.getWhiteBags().get(bagNumber), blackBag);// Empties white bag into corresponding black bag\n                           output[id] += \"player\" + id + \" is filling bag\" + blackBag.getBagLetter() + \" with bag \" + Bag.getWhiteBags().get(bagNumber).getBagLetter() + \"\\n\";\n                       }\n                   } else {\n                       break;\n                   }\n               }\n            //remove random pebble from black bag: sync\n            synchronized (blackBag){\n                chosenPebble = blackBag.getPebbles().get(rand.nextInt(Bag.getSize(blackBag)));  //select the pebble\n                Bag.removePebble(blackBag, chosenPebble);   //remove the pebble from black bag\n            }\n            output[id] += \"player\" + id + \" has drawn a \"+ chosenPebble.getWeight() + \"from bag \"+blackBag.getBagLetter() + '\\n';\n            output[id] += \"player\" + id+\" hand is \" + pebbleArrayList.toString() + \"\\n\";\n            //add it to player\n            addPebble(chosenPebble);\n            lastBag = blackBag;\n            checkWin();\n        }\n        public void discard(){\n            //Remove the pebble from the player\n            Random random = new Random();\n            int indexPebble = random.nextInt(pebbleArrayList.size());\n            Pebble chosenPebble = pebbleArrayList.get(indexPebble);\n            removePebble(chosenPebble);\n            Bag whiteBag;\n            switch (lastBag.getBagLetter()){        // adds it to the corresponding white bag\n                case 'X':\n                    whiteBag = Bag.getWhiteBags().get(0);\n                    break;\n                case 'Y':\n                    whiteBag = Bag.getWhiteBags().get(1);\n                    break;\n                case 'Z':\n                    whiteBag = Bag.getWhiteBags().get(2);\n                    break;\n                default:\n                    throw new IllegalStateException(\"Unexpected value: \" + lastBag.getBagLetter());\n            }\n            synchronized (whiteBag){\n                whiteBag.addPebble(chosenPebble);\n                output[id] += \"player\" +id+ \" has discarded a \"+ chosenPebble.toString() + \"to bag \" +whiteBag.getBagLetter() + \"\\n\";\n                output[id] += \"player\" + id+\" hand is \" + pebbleArrayList.toString() + \"\\n\";\n            }\n            checkWin();\n        }\n        public void checkWin(){\n            if(pebbleArrayList.size() == 10){\n                if(runningTotal == 100){\n                    gameWon = true;\n                    output[id] += \"player\" +id+ \" has won the game.\";\n                }\n            }\n        }\n\n\n        public void run(){\n            try {\n                drawTen();\n                while (!gameWon){\n                    draw();\n                    discard();\n                }\n            }catch (Exception e){\n                e.printStackTrace();\n            }\n        }\n    }\n\n    public static void addPlayer(int id) {\n        PebbleGame.Player.players.add(new Player(id));\n    }\n\n    //Read file Method\n\n    /**\n     * Takes the name of the file for a black bag. Validates the content format with validateWeights method.\n     * Checks there are 11 times the amount of pebbles than players.\n     * @param filename name of black bag input file\n     * @return a Str[] containing all the weights of pebbles\n     * @throws IOException TODO: Catch it\n     */\n    public static String[] addFile(String filename) throws IOException {\n\n        String line = null;\n        BufferedReader bufferedReader = null;\n        String[] weights = null;\n\n        try {\n            //reading the file\n            File file = new File(filename);\n            FileReader fileReader = new FileReader(file);\n            bufferedReader = new BufferedReader(fileReader);\n            // Validate the file content format\n            while ((line = bufferedReader.readLine()) != null){\n                //Validates the file content is in the correct format\n                if(validateWeights(line)){\n                    weights = line.replaceAll(\"\\\\s+\",\"\").split(\",\");\n                }else {\n                    System.out.println(\"The file didn't follow the specified format.\");\n                    return null;\n                }\n            }\n        } catch (IOException e) {\n            e.printStackTrace();\n        } catch(NoSuchElementException e) {\n            e.printStackTrace();\n        } finally {\n            // close the buffered reader\n            //bufferedReader.close();\n        }\n        // Checks if there is 11 times the amount of pebbles than players\n        if(weights.length < 11*Player.players.size()){\n            System.out.println(\"There is not 11 Times the amount of pebbles than players, please input another file\");\n            return null;\n        }\n        return weights;\n    }\n\n    public static void askForBags() throws IOException {\n        ArrayList<Bag> blackBags = Bag.getBlackBags();\n        int i = 0;\n\n        while(i<3) {\n\n            Bag bag = blackBags.get(i);\n\n            // input the file\n            System.out.println(\"Please enter the location of bag number \" + i + \" to load:\");\n            String filename = input.next();\n            // store the weights\n            String[] weights = null;\n            weights = PebbleGame.addFile(filename);\n\n            // fill the bag with the weights only if the file was validated correctly\n            if(weights != null){\n                PebbleGame.fillBag(bag, weights);\n                i++;\n            }\n\n        }\n\n        input.close();\n    }\n\n    /**\n     * Checks the file follows the correct format\n     * @param line\n     * @return Bool. True if follows correct format\n     */\n    public static Boolean validateWeights(String line) {\n        //Checks file content is in the correct format\n        if (line.matches(\"(\\\\d+(,)?\\\\s?)+\")) {\n            return true;\n        }\n        else{\n            return false;\n        }\n    }\n\n    /**\n     * Adds all the white and black bags to the arrays\n     */\n    public static void setupBags(){\n        // Add the black bags to the array\n        Bag.setBlackBags(new Bag(\"black\", 'X'));\n        Bag.setBlackBags(new Bag(\"black\", 'Y'));\n        Bag.setBlackBags(new Bag(\"black\", 'Z'));\n        // Add the white bags to the array\n        Bag.setWhiteBags(new Bag(\"white\", 'A'));\n        Bag.setWhiteBags(new Bag(\"white\", 'B'));\n        Bag.setWhiteBags(new Bag(\"white\", 'C'));\n    }\n    public static void setupPlayers(){\n        //input the amount of players\n        System.out.println(\"Please enter the number of players:\");\n        int number = input.nextInt();\n        // Checks the input is strictly positive\n        while(number < 1){\n            System.out.println(\"Error: Number of players must be strictly positive. Please retry\");\n            number = input.nextInt();\n        }\n        // create the number of players as inputted and add them to the list of players\n        for(int i=0; i<number; i++) {\n            PebbleGame.addPlayer(i);\n        }\n        output = new String[number]; // Set the output array to the amount of players\n    }\n\n\n\n    /**\n     * Takes a bag object and uses a Str[] to fill it with weights\n     * @param bag bag object (should be black)\n     * @param weights String list filled with string type integers separated by commas\n     */\n    public static void fillBag(Bag bag, String[] weights) {\n\n        int weight;\n\n        // iterate through the array\n        for (String s : weights) {\n            weight = Integer.parseInt(s);\n            if (weight < 1) {\n                throw new RuntimeException(\"The weight must be positive\");\n            }\n            bag.addPebble(new Pebble(weight));\n        }\n    }\n    public static void printOutputs() throws IOException {\n\n        try {\n            // Creates new directory for the outputs\n            File dirLocation = new File(\"Player Outputs/\");\n            // Removes any old output files\n            if (!dirLocation.mkdir()) {\n                for (File file : dirLocation.listFiles()) {\n                    file.delete();\n                }\n            }\n            // Writes the output files to the directory\n            for (int i = 0; i < (Player.players.size()); i++) {\n                Path path = Paths.get(\"Player Outputs/player\" + i + \"_output.txt\");\n                Files.write(path, Collections.singleton((output[i])), StandardCharsets.UTF_8);\n            }\n            System.out.println(\"Player outputs have successfully been written to text files in the \" +\n                    \"directory \\\"Player Outputs\\\".\");\n\n        } catch (IOException e) {\n            System.out.println(\"Failed to write some or all outputs to file. Please make sure:\" +\n                    \"\\n\\t - any old output files are not opened or used by another program,\" +\n                    \"\\n\\t - you have the required permissions to write to a file.\");\n        }\n    }\n    public static void main(String[] args) throws IOException {\n        // Pre threading\n        /**\n         * To-Do:\n         * Strictly positive number of players :)\n         * Three white bads A,B,C :)    yes\n         * Three black bags X,Y,Z :)    yes\n         *\n         * Request the number of players ---> Err: Players are greater than 0   yes\n         * Request the location of the 3 Files ---> Err: Correct file type      no\n         * Validate the 3 files ---> In the right format, only contains integers, each bag contains 11 times the number of players  yes\n         */\n\n        // Creates the white and Black Bags\n        setupBags();\n\n\n        System.out.println(\"\\nWelcome to the PebbleGame!!\");\n        System.out.println(\"You will be asked to enter the number of players.\");\n        System.out.println(\"and then for the location of three files in turn containing comma separated integer values for the pebble weights.\");\n        System.out.println(\"The integer values must be strictly positive.\");\n        System.out.println(\"The game will then be simulated, and written to files in this directory.\\n\");\n\n        // Asks for player number and creates the player objects\n\n        setupPlayers();\n        askForBags();\n\n\n        //Post Threading - starts before they draw their initial pebbles\n        /**\n         * Each player take 10 pebbles\n         * win condition: player has ten pebbles with weight totalling exactly 100\n         * Once black bag empty, all pebbles from white bag emptied into it. X filled by A, Y by B\n         * Drawing black pebbles is uniformly at random\n         * players act as concurrent threads\n         * Drawing and discarding are atomic actions (cont)\n         * Bag pebble is discarded to is paired to white bag that pebble just came from\n         * If player attempts to draw from empty bag, try again till they select a bag with pebbles\n         */\n        ArrayList<Bag> blackBags = Bag.getBlackBags();\n        ArrayList<Bag> whiteBags = Bag.getWhiteBags();\n\n        ExecutorService es = Executors.newFixedThreadPool(Player.players.size());\n        for (int i = 0; i < Player.players.size(); i++) {\n            Thread player = new Thread(new Player(i));\n            es.execute(new Thread(player));\n        }\n        es.shutdown();\n\n        // Shuts the game down after 1 minute (so that it does not run forever)\n        try {\n            es.awaitTermination(60, TimeUnit.SECONDS);\n\n        } catch(InterruptedException e) {\n            e.printStackTrace();\n        }\n\n        if(!es.isTerminated()){\n            es.shutdownNow();\n            printOutputs();\n            System.out.println(\"Game ran for over 1 minute and it may be impossible to simulate it, so\" +\n                    \"it has been interrupted.\");\n            System.exit(0);\n        }\n\n        printOutputs();\n\n        System.out.println(\"Player   draws! Saving player outputs...\");\n        printOutputs();\n    }\n\n\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PebbleGame.java b/PebbleGame.java
+--- a/PebbleGame.java	(revision 0d1216e965b3b7b43968b892491224bc94886e53)
++++ b/PebbleGame.java	(date 1636503485564)
+@@ -65,34 +65,32 @@
+             }
+             checkWin();
+         }
+-        public void draw(){
++        public synchronized void draw(){
+             // Randomly pick black bag
+             Pebble chosenPebble;
+             Random rand = new Random();
+             int bagNumber = rand.nextInt(3);
+             Bag blackBag = Bag.getBlackBags().get(bagNumber);
+-            System.out.println(blackBag.getBagLetter());
+             // Check if empty: yes --> fill corresponding; no --> draw pebble
+-               while(true) {//in case there are more than 1 empty bag at the same time
++
+                    if (blackBag.getPebbles().size() == 0) {
+-                       System.out.println(blackBag.getPebbles().size());
+-                       synchronized (this) {
++
+                            Bag.bagFill(Bag.getWhiteBags().get(bagNumber), blackBag);// Empties white bag into corresponding black bag
+                            output[id] += "player" + id + " is filling bag" + blackBag.getBagLetter() + " with bag " + Bag.getWhiteBags().get(bagNumber).getBagLetter() + "\n";
+-                       }
+-                   } else {
+-                       break;
+                    }
+-               }
+-            //remove random pebble from black bag: sync
+-            synchronized (blackBag){
+-                chosenPebble = blackBag.getPebbles().get(rand.nextInt(Bag.getSize(blackBag)));  //select the pebble
+-                Bag.removePebble(blackBag, chosenPebble);   //remove the pebble from black bag
+-            }
+-            output[id] += "player" + id + " has drawn a "+ chosenPebble.getWeight() + "from bag "+blackBag.getBagLetter() + '\n';
+-            output[id] += "player" + id+" hand is " + pebbleArrayList.toString() + "\n";
++            //remove the pebble from black bag
++            if(blackBag.getPebbles().size()==0){
++                System.out.println(blackBag);
++            }
++            chosenPebble = blackBag.getPebbles().get(rand.nextInt(Bag.getSize(blackBag)));  //select the pebble
++            Bag.removePebble(blackBag, chosenPebble);
++
++            output[id] += "player" + id + " has drawn a "+ chosenPebble.getWeight() + " from bag "+blackBag.getBagLetter() + '\n';
+             //add it to player
+             addPebble(chosenPebble);
++            output[id] += "player" + id+" hand is " + pebbleArrayList.toString() + "\n";
++
++
+             lastBag = blackBag;
+             checkWin();
+         }
+@@ -118,7 +116,7 @@
+             }
+             synchronized (whiteBag){
+                 whiteBag.addPebble(chosenPebble);
+-                output[id] += "player" +id+ " has discarded a "+ chosenPebble.toString() + "to bag " +whiteBag.getBagLetter() + "\n";
++                output[id] += "player" +id+ " has discarded a "+ chosenPebble.toString() + " to bag " +whiteBag.getBagLetter() + "\n";
+                 output[id] += "player" + id+" hand is " + pebbleArrayList.toString() + "\n";
+             }
+             checkWin();
+@@ -127,6 +125,7 @@
+             if(pebbleArrayList.size() == 10){
+                 if(runningTotal == 100){
+                     gameWon = true;
++                    System.out.println("player" +id+ " has won the game!!!");
+                     output[id] += "player" +id+ " has won the game.";
+                 }
+             }
+@@ -137,8 +136,9 @@
+             try {
+                 drawTen();
+                 while (!gameWon){
++                    discard();
+                     draw();
+-                    discard();
++
+                 }
+             }catch (Exception e){
+                 e.printStackTrace();
+Index: Player Outputs/player1_output.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Player Outputs/player1_output.txt b/Player Outputs/player1_output.txt
+new file mode 100644
+--- /dev/null	(date 1636503761386)
++++ b/Player Outputs/player1_output.txt	(date 1636503761386)
+@@ -0,0 +1,673 @@
++nullplayer1 has drawn a 39from bag Y
++player1 hand is [39]
++player1 has drawn a 88from bag Y
++player1 hand is [39, 88]
++player1 has drawn a 98from bag Y
++player1 hand is [39, 88, 98]
++player1 has drawn a 70from bag Y
++player1 hand is [39, 88, 98, 70]
++player1 has drawn a 30from bag Y
++player1 hand is [39, 88, 98, 70, 30]
++player1 has drawn a 76from bag Y
++player1 hand is [39, 88, 98, 70, 30, 76]
++player1 has drawn a 74from bag Y
++player1 hand is [39, 88, 98, 70, 30, 76, 74]
++player1 has drawn a 77from bag Y
++player1 hand is [39, 88, 98, 70, 30, 76, 74, 77]
++player1 has drawn a 49from bag Y
++player1 hand is [39, 88, 98, 70, 30, 76, 74, 77, 49]
++player1 has drawn a 36from bag Y
++player1 hand is [39, 88, 98, 70, 30, 76, 74, 77, 49, 36]
++player1 has discarded a 77 to bag B
++player1 hand is [39, 88, 98, 70, 30, 76, 74, 49, 36]
++player1 has drawn a 66 from bag X
++player1 hand is [39, 88, 98, 70, 30, 76, 74, 49, 36, 66]
++player1 has discarded a 70 to bag A
++player1 hand is [39, 88, 98, 30, 76, 74, 49, 36, 66]
++player1 has drawn a 70 from bag Z
++player1 hand is [39, 88, 98, 30, 76, 74, 49, 36, 66, 70]
++player1 has discarded a 39 to bag C
++player1 hand is [88, 98, 30, 76, 74, 49, 36, 66, 70]
++player1 has drawn a 29 from bag Z
++player1 hand is [88, 98, 30, 76, 74, 49, 36, 66, 70, 29]
++player1 has discarded a 36 to bag C
++player1 hand is [88, 98, 30, 76, 74, 49, 66, 70, 29]
++player1 has drawn a 44 from bag X
++player1 hand is [88, 98, 30, 76, 74, 49, 66, 70, 29, 44]
++player1 has discarded a 49 to bag A
++player1 hand is [88, 98, 30, 76, 74, 66, 70, 29, 44]
++player1 has drawn a 6 from bag Z
++player1 hand is [88, 98, 30, 76, 74, 66, 70, 29, 44, 6]
++player1 has discarded a 74 to bag C
++player1 hand is [88, 98, 30, 76, 66, 70, 29, 44, 6]
++player1 has drawn a 85 from bag Y
++player1 hand is [88, 98, 30, 76, 66, 70, 29, 44, 6, 85]
++player1 has discarded a 44 to bag B
++player1 hand is [88, 98, 30, 76, 66, 70, 29, 6, 85]
++player1 has drawn a 47 from bag X
++player1 hand is [88, 98, 30, 76, 66, 70, 29, 6, 85, 47]
++player1 has discarded a 6 to bag A
++player1 hand is [88, 98, 30, 76, 66, 70, 29, 85, 47]
++player1 has drawn a 93 from bag Z
++player1 hand is [88, 98, 30, 76, 66, 70, 29, 85, 47, 93]
++player1 has discarded a 85 to bag C
++player1 hand is [88, 98, 30, 76, 66, 70, 29, 47, 93]
++player1 has drawn a 87 from bag Z
++player1 hand is [88, 98, 30, 76, 66, 70, 29, 47, 93, 87]
++player1 has discarded a 29 to bag C
++player1 hand is [88, 98, 30, 76, 66, 70, 47, 93, 87]
++player1 has drawn a 86 from bag Z
++player1 hand is [88, 98, 30, 76, 66, 70, 47, 93, 87, 86]
++player1 has discarded a 66 to bag C
++player1 hand is [88, 98, 30, 76, 70, 47, 93, 87, 86]
++player1 has drawn a 45 from bag Z
++player1 hand is [88, 98, 30, 76, 70, 47, 93, 87, 86, 45]
++player1 has discarded a 70 to bag C
++player1 hand is [88, 98, 30, 76, 47, 93, 87, 86, 45]
++player1 has drawn a 64 from bag X
++player1 hand is [88, 98, 30, 76, 47, 93, 87, 86, 45, 64]
++player1 has discarded a 88 to bag A
++player1 hand is [98, 30, 76, 47, 93, 87, 86, 45, 64]
++player1 has drawn a 80 from bag Z
++player1 hand is [98, 30, 76, 47, 93, 87, 86, 45, 64, 80]
++player1 has discarded a 76 to bag C
++player1 hand is [98, 30, 47, 93, 87, 86, 45, 64, 80]
++player1 has drawn a 30 from bag X
++player1 hand is [98, 30, 47, 93, 87, 86, 45, 64, 80, 30]
++player1 has discarded a 30 to bag A
++player1 hand is [98, 47, 93, 87, 86, 45, 64, 80, 30]
++player1 has drawn a 47 from bag Z
++player1 hand is [98, 47, 93, 87, 86, 45, 64, 80, 30, 47]
++player1 has discarded a 87 to bag C
++player1 hand is [98, 47, 93, 86, 45, 64, 80, 30, 47]
++player1 has drawn a 13 from bag Y
++player1 hand is [98, 47, 93, 86, 45, 64, 80, 30, 47, 13]
++player1 has discarded a 93 to bag B
++player1 hand is [98, 47, 86, 45, 64, 80, 30, 47, 13]
++player1 has drawn a 18 from bag Y
++player1 hand is [98, 47, 86, 45, 64, 80, 30, 47, 13, 18]
++player1 has discarded a 13 to bag B
++player1 hand is [98, 47, 86, 45, 64, 80, 30, 47, 18]
++player1 has drawn a 26 from bag X
++player1 hand is [98, 47, 86, 45, 64, 80, 30, 47, 18, 26]
++player1 has discarded a 98 to bag A
++player1 hand is [47, 86, 45, 64, 80, 30, 47, 18, 26]
++player1 has drawn a 75 from bag Y
++player1 hand is [47, 86, 45, 64, 80, 30, 47, 18, 26, 75]
++player1 has discarded a 26 to bag B
++player1 hand is [47, 86, 45, 64, 80, 30, 47, 18, 75]
++player1 has drawn a 42 from bag Z
++player1 hand is [47, 86, 45, 64, 80, 30, 47, 18, 75, 42]
++player1 has discarded a 80 to bag C
++player1 hand is [47, 86, 45, 64, 30, 47, 18, 75, 42]
++player1 has drawn a 43 from bag Y
++player1 hand is [47, 86, 45, 64, 30, 47, 18, 75, 42, 43]
++player1 has discarded a 75 to bag B
++player1 hand is [47, 86, 45, 64, 30, 47, 18, 42, 43]
++player1 has drawn a 15 from bag X
++player1 hand is [47, 86, 45, 64, 30, 47, 18, 42, 43, 15]
++player1 has discarded a 18 to bag A
++player1 hand is [47, 86, 45, 64, 30, 47, 42, 43, 15]
++player1 has drawn a 2 from bag X
++player1 hand is [47, 86, 45, 64, 30, 47, 42, 43, 15, 2]
++player1 has discarded a 47 to bag A
++player1 hand is [47, 86, 45, 64, 30, 42, 43, 15, 2]
++player1 has drawn a 12 from bag Z
++player1 hand is [47, 86, 45, 64, 30, 42, 43, 15, 2, 12]
++player1 has discarded a 45 to bag C
++player1 hand is [47, 86, 64, 30, 42, 43, 15, 2, 12]
++player1 has drawn a 94 from bag X
++player1 hand is [47, 86, 64, 30, 42, 43, 15, 2, 12, 94]
++player1 has discarded a 15 to bag A
++player1 hand is [47, 86, 64, 30, 42, 43, 2, 12, 94]
++player1 has drawn a 43 from bag Z
++player1 hand is [47, 86, 64, 30, 42, 43, 2, 12, 94, 43]
++player1 has discarded a 94 to bag C
++player1 hand is [47, 86, 64, 30, 42, 43, 2, 12, 43]
++player1 has drawn a 67 from bag Z
++player1 hand is [47, 86, 64, 30, 42, 43, 2, 12, 43, 67]
++player1 has discarded a 64 to bag C
++player1 hand is [47, 86, 30, 42, 43, 2, 12, 43, 67]
++player1 has drawn a 55 from bag X
++player1 hand is [47, 86, 30, 42, 43, 2, 12, 43, 67, 55]
++player1 has discarded a 55 to bag A
++player1 hand is [47, 86, 30, 42, 43, 2, 12, 43, 67]
++player1 has drawn a 14 from bag Z
++player1 hand is [47, 86, 30, 42, 43, 2, 12, 43, 67, 14]
++player1 has discarded a 12 to bag C
++player1 hand is [47, 86, 30, 42, 43, 2, 43, 67, 14]
++player1 has drawn a 8 from bag Y
++player1 hand is [47, 86, 30, 42, 43, 2, 43, 67, 14, 8]
++player1 has discarded a 8 to bag B
++player1 hand is [47, 86, 30, 42, 43, 2, 43, 67, 14]
++player1 has drawn a 75 from bag Z
++player1 hand is [47, 86, 30, 42, 43, 2, 43, 67, 14, 75]
++player1 has discarded a 47 to bag C
++player1 hand is [86, 30, 42, 43, 2, 43, 67, 14, 75]
++player1 has drawn a 91 from bag Y
++player1 hand is [86, 30, 42, 43, 2, 43, 67, 14, 75, 91]
++player1 has discarded a 42 to bag B
++player1 hand is [86, 30, 43, 2, 43, 67, 14, 75, 91]
++player1 has drawn a 35 from bag Y
++player1 hand is [86, 30, 43, 2, 43, 67, 14, 75, 91, 35]
++player1 has discarded a 35 to bag B
++player1 hand is [86, 30, 43, 2, 43, 67, 14, 75, 91]
++player1 has drawn a 22 from bag Z
++player1 hand is [86, 30, 43, 2, 43, 67, 14, 75, 91, 22]
++player1 has discarded a 2 to bag C
++player1 hand is [86, 30, 43, 43, 67, 14, 75, 91, 22]
++player1 has drawn a 98 from bag X
++player1 hand is [86, 30, 43, 43, 67, 14, 75, 91, 22, 98]
++player1 has discarded a 43 to bag A
++player1 hand is [86, 30, 43, 67, 14, 75, 91, 22, 98]
++player1 has drawn a 43 from bag X
++player1 hand is [86, 30, 43, 67, 14, 75, 91, 22, 98, 43]
++player1 has discarded a 43 to bag A
++player1 hand is [86, 30, 43, 67, 14, 75, 91, 22, 98]
++player1 has drawn a 71 from bag Y
++player1 hand is [86, 30, 43, 67, 14, 75, 91, 22, 98, 71]
++player1 has discarded a 22 to bag B
++player1 hand is [86, 30, 43, 67, 14, 75, 91, 98, 71]
++player1 has drawn a 5 from bag Y
++player1 hand is [86, 30, 43, 67, 14, 75, 91, 98, 71, 5]
++player1 has discarded a 14 to bag B
++player1 hand is [86, 30, 43, 67, 75, 91, 98, 71, 5]
++player1 has drawn a 25 from bag Z
++player1 hand is [86, 30, 43, 67, 75, 91, 98, 71, 5, 25]
++player1 has discarded a 25 to bag C
++player1 hand is [86, 30, 43, 67, 75, 91, 98, 71, 5]
++player1 has drawn a 65 from bag Z
++player1 hand is [86, 30, 43, 67, 75, 91, 98, 71, 5, 65]
++player1 has discarded a 43 to bag C
++player1 hand is [86, 30, 67, 75, 91, 98, 71, 5, 65]
++player1 has drawn a 64 from bag Y
++player1 hand is [86, 30, 67, 75, 91, 98, 71, 5, 65, 64]
++player1 has discarded a 86 to bag B
++player1 hand is [30, 67, 75, 91, 98, 71, 5, 65, 64]
++player1 has drawn a 93 from bag Y
++player1 hand is [30, 67, 75, 91, 98, 71, 5, 65, 64, 93]
++player1 has discarded a 64 to bag B
++player1 hand is [30, 67, 75, 91, 98, 71, 5, 65, 93]
++player1 has drawn a 26 from bag Y
++player1 hand is [30, 67, 75, 91, 98, 71, 5, 65, 93, 26]
++player1 has discarded a 65 to bag B
++player1 hand is [30, 67, 75, 91, 98, 71, 5, 93, 26]
++player1 has drawn a 62 from bag Z
++player1 hand is [30, 67, 75, 91, 98, 71, 5, 93, 26, 62]
++player1 has discarded a 5 to bag C
++player1 hand is [30, 67, 75, 91, 98, 71, 93, 26, 62]
++player1 has drawn a 33 from bag Y
++player1 hand is [30, 67, 75, 91, 98, 71, 93, 26, 62, 33]
++player1 has discarded a 93 to bag B
++player1 hand is [30, 67, 75, 91, 98, 71, 26, 62, 33]
++player1 has drawn a 72 from bag X
++player1 hand is [30, 67, 75, 91, 98, 71, 26, 62, 33, 72]
++player1 has discarded a 62 to bag A
++player1 hand is [30, 67, 75, 91, 98, 71, 26, 33, 72]
++player1 has drawn a 65 from bag Y
++player1 hand is [30, 67, 75, 91, 98, 71, 26, 33, 72, 65]
++player1 has discarded a 72 to bag B
++player1 hand is [30, 67, 75, 91, 98, 71, 26, 33, 65]
++player1 has drawn a 9 from bag Y
++player1 hand is [30, 67, 75, 91, 98, 71, 26, 33, 65, 9]
++player1 has discarded a 33 to bag B
++player1 hand is [30, 67, 75, 91, 98, 71, 26, 65, 9]
++player1 has drawn a 97 from bag Y
++player1 hand is [30, 67, 75, 91, 98, 71, 26, 65, 9, 97]
++player1 has discarded a 98 to bag B
++player1 hand is [30, 67, 75, 91, 71, 26, 65, 9, 97]
++player1 has drawn a 3 from bag Z
++player1 hand is [30, 67, 75, 91, 71, 26, 65, 9, 97, 3]
++player1 has discarded a 75 to bag C
++player1 hand is [30, 67, 91, 71, 26, 65, 9, 97, 3]
++player1 has drawn a 84 from bag Z
++player1 hand is [30, 67, 91, 71, 26, 65, 9, 97, 3, 84]
++player1 has discarded a 9 to bag C
++player1 hand is [30, 67, 91, 71, 26, 65, 97, 3, 84]
++player1 has drawn a 46 from bag Y
++player1 hand is [30, 67, 91, 71, 26, 65, 97, 3, 84, 46]
++player1 has discarded a 26 to bag B
++player1 hand is [30, 67, 91, 71, 65, 97, 3, 84, 46]
++player1 has drawn a 87 from bag Y
++player1 hand is [30, 67, 91, 71, 65, 97, 3, 84, 46, 87]
++player1 has discarded a 84 to bag B
++player1 hand is [30, 67, 91, 71, 65, 97, 3, 46, 87]
++player1 has drawn a 53 from bag Y
++player1 hand is [30, 67, 91, 71, 65, 97, 3, 46, 87, 53]
++player1 has discarded a 46 to bag B
++player1 hand is [30, 67, 91, 71, 65, 97, 3, 87, 53]
++player1 has drawn a 59 from bag Z
++player1 hand is [30, 67, 91, 71, 65, 97, 3, 87, 53, 59]
++player1 has discarded a 30 to bag C
++player1 hand is [67, 91, 71, 65, 97, 3, 87, 53, 59]
++player1 has drawn a 64 from bag Z
++player1 hand is [67, 91, 71, 65, 97, 3, 87, 53, 59, 64]
++player1 has discarded a 53 to bag C
++player1 hand is [67, 91, 71, 65, 97, 3, 87, 59, 64]
++player1 has drawn a 99 from bag Y
++player1 hand is [67, 91, 71, 65, 97, 3, 87, 59, 64, 99]
++player1 has discarded a 64 to bag B
++player1 hand is [67, 91, 71, 65, 97, 3, 87, 59, 99]
++player1 has drawn a 11 from bag Z
++player1 hand is [67, 91, 71, 65, 97, 3, 87, 59, 99, 11]
++player1 has discarded a 99 to bag C
++player1 hand is [67, 91, 71, 65, 97, 3, 87, 59, 11]
++player1 has drawn a 48 from bag Z
++player1 hand is [67, 91, 71, 65, 97, 3, 87, 59, 11, 48]
++player1 has discarded a 71 to bag C
++player1 hand is [67, 91, 65, 97, 3, 87, 59, 11, 48]
++player1 has drawn a 37 from bag Y
++player1 hand is [67, 91, 65, 97, 3, 87, 59, 11, 48, 37]
++player1 has discarded a 65 to bag B
++player1 hand is [67, 91, 97, 3, 87, 59, 11, 48, 37]
++player1 has drawn a 15 from bag Z
++player1 hand is [67, 91, 97, 3, 87, 59, 11, 48, 37, 15]
++player1 has discarded a 67 to bag C
++player1 hand is [91, 97, 3, 87, 59, 11, 48, 37, 15]
++player1 has drawn a 54 from bag Y
++player1 hand is [91, 97, 3, 87, 59, 11, 48, 37, 15, 54]
++player1 has discarded a 97 to bag B
++player1 hand is [91, 3, 87, 59, 11, 48, 37, 15, 54]
++player1 has drawn a 45 from bag X
++player1 hand is [91, 3, 87, 59, 11, 48, 37, 15, 54, 45]
++player1 has discarded a 11 to bag A
++player1 hand is [91, 3, 87, 59, 48, 37, 15, 54, 45]
++player1 has drawn a 39 from bag X
++player1 hand is [91, 3, 87, 59, 48, 37, 15, 54, 45, 39]
++player1 has discarded a 37 to bag A
++player1 hand is [91, 3, 87, 59, 48, 15, 54, 45, 39]
++player1 has drawn a 17 from bag Z
++player1 hand is [91, 3, 87, 59, 48, 15, 54, 45, 39, 17]
++player1 has discarded a 17 to bag C
++player1 hand is [91, 3, 87, 59, 48, 15, 54, 45, 39]
++player1 has drawn a 63 from bag Z
++player1 hand is [91, 3, 87, 59, 48, 15, 54, 45, 39, 63]
++player1 has discarded a 45 to bag C
++player1 hand is [91, 3, 87, 59, 48, 15, 54, 39, 63]
++player1 has drawn a 62 from bag Y
++player1 hand is [91, 3, 87, 59, 48, 15, 54, 39, 63, 62]
++player1 has discarded a 54 to bag B
++player1 hand is [91, 3, 87, 59, 48, 15, 39, 63, 62]
++player1 has drawn a 21 from bag Y
++player1 hand is [91, 3, 87, 59, 48, 15, 39, 63, 62, 21]
++player1 has discarded a 87 to bag B
++player1 hand is [91, 3, 59, 48, 15, 39, 63, 62, 21]
++player1 has drawn a 52 from bag Y
++player1 hand is [91, 3, 59, 48, 15, 39, 63, 62, 21, 52]
++player1 has discarded a 3 to bag B
++player1 hand is [91, 59, 48, 15, 39, 63, 62, 21, 52]
++player1 has drawn a 4 from bag Z
++player1 hand is [91, 59, 48, 15, 39, 63, 62, 21, 52, 4]
++player1 has discarded a 21 to bag C
++player1 hand is [91, 59, 48, 15, 39, 63, 62, 52, 4]
++player1 has drawn a 8 from bag X
++player1 hand is [91, 59, 48, 15, 39, 63, 62, 52, 4, 8]
++player1 has discarded a 62 to bag A
++player1 hand is [91, 59, 48, 15, 39, 63, 52, 4, 8]
++player1 has drawn a 45 from bag Y
++player1 hand is [91, 59, 48, 15, 39, 63, 52, 4, 8, 45]
++player1 has discarded a 15 to bag B
++player1 hand is [91, 59, 48, 39, 63, 52, 4, 8, 45]
++player1 has drawn a 89 from bag X
++player1 hand is [91, 59, 48, 39, 63, 52, 4, 8, 45, 89]
++player1 has discarded a 39 to bag A
++player1 hand is [91, 59, 48, 63, 52, 4, 8, 45, 89]
++player1 has drawn a 35 from bag X
++player1 hand is [91, 59, 48, 63, 52, 4, 8, 45, 89, 35]
++player1 has discarded a 89 to bag A
++player1 hand is [91, 59, 48, 63, 52, 4, 8, 45, 35]
++player1 has drawn a 40 from bag Y
++player1 hand is [91, 59, 48, 63, 52, 4, 8, 45, 35, 40]
++player1 has discarded a 52 to bag B
++player1 hand is [91, 59, 48, 63, 4, 8, 45, 35, 40]
++player1 has drawn a 32 from bag Y
++player1 hand is [91, 59, 48, 63, 4, 8, 45, 35, 40, 32]
++player1 has discarded a 40 to bag B
++player1 hand is [91, 59, 48, 63, 4, 8, 45, 35, 32]
++player1 has drawn a 18 from bag X
++player1 hand is [91, 59, 48, 63, 4, 8, 45, 35, 32, 18]
++player1 has discarded a 59 to bag A
++player1 hand is [91, 48, 63, 4, 8, 45, 35, 32, 18]
++player1 has drawn a 46 from bag X
++player1 hand is [91, 48, 63, 4, 8, 45, 35, 32, 18, 46]
++player1 has discarded a 45 to bag A
++player1 hand is [91, 48, 63, 4, 8, 35, 32, 18, 46]
++player1 has drawn a 20 from bag X
++player1 hand is [91, 48, 63, 4, 8, 35, 32, 18, 46, 20]
++player1 has discarded a 4 to bag A
++player1 hand is [91, 48, 63, 8, 35, 32, 18, 46, 20]
++player1 has drawn a 48 from bag Y
++player1 hand is [91, 48, 63, 8, 35, 32, 18, 46, 20, 48]
++player1 has discarded a 20 to bag B
++player1 hand is [91, 48, 63, 8, 35, 32, 18, 46, 48]
++player1 has drawn a 82 from bag Z
++player1 hand is [91, 48, 63, 8, 35, 32, 18, 46, 48, 82]
++player1 has discarded a 35 to bag C
++player1 hand is [91, 48, 63, 8, 32, 18, 46, 48, 82]
++player1 has drawn a 73 from bag Z
++player1 hand is [91, 48, 63, 8, 32, 18, 46, 48, 82, 73]
++player1 has discarded a 32 to bag C
++player1 hand is [91, 48, 63, 8, 18, 46, 48, 82, 73]
++player1 has drawn a 46 from bag Z
++player1 hand is [91, 48, 63, 8, 18, 46, 48, 82, 73, 46]
++player1 has discarded a 91 to bag C
++player1 hand is [48, 63, 8, 18, 46, 48, 82, 73, 46]
++player1 has drawn a 12 from bag Y
++player1 hand is [48, 63, 8, 18, 46, 48, 82, 73, 46, 12]
++player1 has discarded a 12 to bag B
++player1 hand is [48, 63, 8, 18, 46, 48, 82, 73, 46]
++player1 has drawn a 41 from bag X
++player1 hand is [48, 63, 8, 18, 46, 48, 82, 73, 46, 41]
++player1 has discarded a 18 to bag A
++player1 hand is [48, 63, 8, 46, 48, 82, 73, 46, 41]
++player1 has drawn a 27 from bag X
++player1 hand is [48, 63, 8, 46, 48, 82, 73, 46, 41, 27]
++player1 has discarded a 63 to bag A
++player1 hand is [48, 8, 46, 48, 82, 73, 46, 41, 27]
++player1 has drawn a 19 from bag X
++player1 hand is [48, 8, 46, 48, 82, 73, 46, 41, 27, 19]
++player1 has discarded a 82 to bag A
++player1 hand is [48, 8, 46, 48, 73, 46, 41, 27, 19]
++player1 has drawn a 70 from bag X
++player1 hand is [48, 8, 46, 48, 73, 46, 41, 27, 19, 70]
++player1 has discarded a 46 to bag A
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 70]
++player1 has drawn a 24 from bag Y
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 70, 24]
++player1 has discarded a 70 to bag B
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 24]
++player1 has drawn a 37 from bag X
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 24, 37]
++player1 has discarded a 24 to bag A
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 37]
++player1 has drawn a 7 from bag Y
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 37, 7]
++player1 has discarded a 37 to bag B
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 7]
++player1 has drawn a 25 from bag Y
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 7, 25]
++player1 has discarded a 7 to bag B
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 25]
++player1 has drawn a 33 from bag X
++player1 hand is [48, 8, 48, 73, 46, 41, 27, 19, 25, 33]
++player1 has discarded a 48 to bag A
++player1 hand is [48, 8, 73, 46, 41, 27, 19, 25, 33]
++player1 has drawn a 44 from bag Y
++player1 hand is [48, 8, 73, 46, 41, 27, 19, 25, 33, 44]
++player1 has discarded a 44 to bag B
++player1 hand is [48, 8, 73, 46, 41, 27, 19, 25, 33]
++player1 has drawn a 63 from bag X
++player1 hand is [48, 8, 73, 46, 41, 27, 19, 25, 33, 63]
++player1 has discarded a 19 to bag A
++player1 hand is [48, 8, 73, 46, 41, 27, 25, 33, 63]
++player1 has drawn a 58 from bag Z
++player1 hand is [48, 8, 73, 46, 41, 27, 25, 33, 63, 58]
++player1 has discarded a 25 to bag C
++player1 hand is [48, 8, 73, 46, 41, 27, 33, 63, 58]
++player1 has drawn a 35 from bag Z
++player1 hand is [48, 8, 73, 46, 41, 27, 33, 63, 58, 35]
++player1 has discarded a 63 to bag C
++player1 hand is [48, 8, 73, 46, 41, 27, 33, 58, 35]
++player1 has drawn a 29 from bag Y
++player1 hand is [48, 8, 73, 46, 41, 27, 33, 58, 35, 29]
++player1 has discarded a 46 to bag B
++player1 hand is [48, 8, 73, 41, 27, 33, 58, 35, 29]
++player1 has drawn a 30 from bag Z
++player1 hand is [48, 8, 73, 41, 27, 33, 58, 35, 29, 30]
++player1 has discarded a 30 to bag C
++player1 hand is [48, 8, 73, 41, 27, 33, 58, 35, 29]
++player1 has drawn a 81 from bag Z
++player1 hand is [48, 8, 73, 41, 27, 33, 58, 35, 29, 81]
++player1 has discarded a 8 to bag C
++player1 hand is [48, 73, 41, 27, 33, 58, 35, 29, 81]
++player1 has drawn a 86 from bag Y
++player1 hand is [48, 73, 41, 27, 33, 58, 35, 29, 81, 86]
++player1 has discarded a 41 to bag B
++player1 hand is [48, 73, 27, 33, 58, 35, 29, 81, 86]
++player1 has drawn a 52 from bag Z
++player1 hand is [48, 73, 27, 33, 58, 35, 29, 81, 86, 52]
++player1 has discarded a 58 to bag C
++player1 hand is [48, 73, 27, 33, 35, 29, 81, 86, 52]
++player1 has drawn a 82 from bag X
++player1 hand is [48, 73, 27, 33, 35, 29, 81, 86, 52, 82]
++player1 has discarded a 27 to bag A
++player1 hand is [48, 73, 33, 35, 29, 81, 86, 52, 82]
++player1 has drawn a 28 from bag X
++player1 hand is [48, 73, 33, 35, 29, 81, 86, 52, 82, 28]
++player1 has discarded a 82 to bag A
++player1 hand is [48, 73, 33, 35, 29, 81, 86, 52, 28]
++player1 has drawn a 90 from bag Z
++player1 hand is [48, 73, 33, 35, 29, 81, 86, 52, 28, 90]
++player1 has discarded a 35 to bag C
++player1 hand is [48, 73, 33, 29, 81, 86, 52, 28, 90]
++player1 has drawn a 36 from bag Z
++player1 hand is [48, 73, 33, 29, 81, 86, 52, 28, 90, 36]
++player1 has discarded a 33 to bag C
++player1 hand is [48, 73, 29, 81, 86, 52, 28, 90, 36]
++player1 has drawn a 96 from bag Z
++player1 hand is [48, 73, 29, 81, 86, 52, 28, 90, 36, 96]
++player1 has discarded a 81 to bag C
++player1 hand is [48, 73, 29, 86, 52, 28, 90, 36, 96]
++player1 has drawn a 79 from bag X
++player1 hand is [48, 73, 29, 86, 52, 28, 90, 36, 96, 79]
++player1 has discarded a 29 to bag A
++player1 hand is [48, 73, 86, 52, 28, 90, 36, 96, 79]
++player1 has drawn a 99 from bag Z
++player1 hand is [48, 73, 86, 52, 28, 90, 36, 96, 79, 99]
++player1 has discarded a 86 to bag C
++player1 hand is [48, 73, 52, 28, 90, 36, 96, 79, 99]
++player1 has drawn a 66 from bag Y
++player1 hand is [48, 73, 52, 28, 90, 36, 96, 79, 99, 66]
++player1 has discarded a 96 to bag B
++player1 hand is [48, 73, 52, 28, 90, 36, 79, 99, 66]
++player1 has drawn a 11 from bag Y
++player1 hand is [48, 73, 52, 28, 90, 36, 79, 99, 66, 11]
++player1 has discarded a 36 to bag B
++player1 hand is [48, 73, 52, 28, 90, 79, 99, 66, 11]
++player1 has drawn a 81 from bag X
++player1 hand is [48, 73, 52, 28, 90, 79, 99, 66, 11, 81]
++player1 has discarded a 99 to bag A
++player1 hand is [48, 73, 52, 28, 90, 79, 66, 11, 81]
++player1 has drawn a 93 from bag X
++player1 hand is [48, 73, 52, 28, 90, 79, 66, 11, 81, 93]
++player1 has discarded a 73 to bag A
++player1 hand is [48, 52, 28, 90, 79, 66, 11, 81, 93]
++player1 has drawn a 21 from bag X
++player1 hand is [48, 52, 28, 90, 79, 66, 11, 81, 93, 21]
++player1 has discarded a 28 to bag A
++player1 hand is [48, 52, 90, 79, 66, 11, 81, 93, 21]
++player1 has drawn a 60 from bag Y
++player1 hand is [48, 52, 90, 79, 66, 11, 81, 93, 21, 60]
++player1 has discarded a 90 to bag B
++player1 hand is [48, 52, 79, 66, 11, 81, 93, 21, 60]
++player1 has drawn a 5 from bag Z
++player1 hand is [48, 52, 79, 66, 11, 81, 93, 21, 60, 5]
++player1 has discarded a 60 to bag C
++player1 hand is [48, 52, 79, 66, 11, 81, 93, 21, 5]
++player1 has drawn a 22 from bag Y
++player1 hand is [48, 52, 79, 66, 11, 81, 93, 21, 5, 22]
++player1 has discarded a 93 to bag B
++player1 hand is [48, 52, 79, 66, 11, 81, 21, 5, 22]
++player1 has drawn a 4 from bag Y
++player1 hand is [48, 52, 79, 66, 11, 81, 21, 5, 22, 4]
++player1 has discarded a 4 to bag B
++player1 hand is [48, 52, 79, 66, 11, 81, 21, 5, 22]
++player1 has drawn a 26 from bag Z
++player1 hand is [48, 52, 79, 66, 11, 81, 21, 5, 22, 26]
++player1 has discarded a 5 to bag C
++player1 hand is [48, 52, 79, 66, 11, 81, 21, 22, 26]
++player1 has drawn a 34 from bag Y
++player1 hand is [48, 52, 79, 66, 11, 81, 21, 22, 26, 34]
++player1 has discarded a 81 to bag B
++player1 hand is [48, 52, 79, 66, 11, 21, 22, 26, 34]
++player1 has drawn a 69 from bag Z
++player1 hand is [48, 52, 79, 66, 11, 21, 22, 26, 34, 69]
++player1 has discarded a 21 to bag C
++player1 hand is [48, 52, 79, 66, 11, 22, 26, 34, 69]
++player1 has drawn a 59 from bag Y
++player1 hand is [48, 52, 79, 66, 11, 22, 26, 34, 69, 59]
++player1 has discarded a 11 to bag B
++player1 hand is [48, 52, 79, 66, 22, 26, 34, 69, 59]
++player1 has drawn a 95 from bag Z
++player1 hand is [48, 52, 79, 66, 22, 26, 34, 69, 59, 95]
++player1 has discarded a 59 to bag C
++player1 hand is [48, 52, 79, 66, 22, 26, 34, 69, 95]
++player1 has drawn a 88 from bag X
++player1 hand is [48, 52, 79, 66, 22, 26, 34, 69, 95, 88]
++player1 has discarded a 22 to bag A
++player1 hand is [48, 52, 79, 66, 26, 34, 69, 95, 88]
++player1 has drawn a 97 from bag Z
++player1 hand is [48, 52, 79, 66, 26, 34, 69, 95, 88, 97]
++player1 has discarded a 69 to bag C
++player1 hand is [48, 52, 79, 66, 26, 34, 95, 88, 97]
++player1 has drawn a 25 from bag X
++player1 hand is [48, 52, 79, 66, 26, 34, 95, 88, 97, 25]
++player1 has discarded a 48 to bag A
++player1 hand is [52, 79, 66, 26, 34, 95, 88, 97, 25]
++player1 has drawn a 94 from bag Z
++player1 hand is [52, 79, 66, 26, 34, 95, 88, 97, 25, 94]
++player1 has discarded a 34 to bag C
++player1 hand is [52, 79, 66, 26, 95, 88, 97, 25, 94]
++player1 has drawn a 78 from bag Y
++player1 hand is [52, 79, 66, 26, 95, 88, 97, 25, 94, 78]
++player1 has discarded a 26 to bag B
++player1 hand is [52, 79, 66, 95, 88, 97, 25, 94, 78]
++player1 has drawn a 41 from bag Z
++player1 hand is [52, 79, 66, 95, 88, 97, 25, 94, 78, 41]
++player1 has discarded a 66 to bag C
++player1 hand is [52, 79, 95, 88, 97, 25, 94, 78, 41]
++player1 has drawn a 88 from bag Z
++player1 hand is [52, 79, 95, 88, 97, 25, 94, 78, 41, 88]
++player1 has discarded a 94 to bag C
++player1 hand is [52, 79, 95, 88, 97, 25, 78, 41, 88]
++player1 has drawn a 38 from bag Y
++player1 hand is [52, 79, 95, 88, 97, 25, 78, 41, 88, 38]
++player1 has discarded a 79 to bag B
++player1 hand is [52, 95, 88, 97, 25, 78, 41, 88, 38]
++player1 has drawn a 19 from bag Z
++player1 hand is [52, 95, 88, 97, 25, 78, 41, 88, 38, 19]
++player1 has discarded a 97 to bag C
++player1 hand is [52, 95, 88, 25, 78, 41, 88, 38, 19]
++player1 has drawn a 80 from bag X
++player1 hand is [52, 95, 88, 25, 78, 41, 88, 38, 19, 80]
++player1 has discarded a 38 to bag A
++player1 hand is [52, 95, 88, 25, 78, 41, 88, 19, 80]
++player1 has drawn a 53 from bag Z
++player1 hand is [52, 95, 88, 25, 78, 41, 88, 19, 80, 53]
++player1 has discarded a 95 to bag C
++player1 hand is [52, 88, 25, 78, 41, 88, 19, 80, 53]
++player1 has drawn a 78 from bag Y
++player1 hand is [52, 88, 25, 78, 41, 88, 19, 80, 53, 78]
++player1 has discarded a 25 to bag B
++player1 hand is [52, 88, 78, 41, 88, 19, 80, 53, 78]
++player1 has drawn a 24 from bag X
++player1 hand is [52, 88, 78, 41, 88, 19, 80, 53, 78, 24]
++player1 has discarded a 88 to bag A
++player1 hand is [52, 78, 41, 88, 19, 80, 53, 78, 24]
++player1 has drawn a 79 from bag Z
++player1 hand is [52, 78, 41, 88, 19, 80, 53, 78, 24, 79]
++player1 has discarded a 78 to bag C
++player1 hand is [52, 41, 88, 19, 80, 53, 78, 24, 79]
++player1 has drawn a 16 from bag Y
++player1 hand is [52, 41, 88, 19, 80, 53, 78, 24, 79, 16]
++player1 has discarded a 78 to bag B
++player1 hand is [52, 41, 88, 19, 80, 53, 24, 79, 16]
++player1 has drawn a 16 from bag X
++player1 hand is [52, 41, 88, 19, 80, 53, 24, 79, 16, 16]
++player1 has discarded a 24 to bag A
++player1 hand is [52, 41, 88, 19, 80, 53, 79, 16, 16]
++player1 has drawn a 64 from bag Y
++player1 hand is [52, 41, 88, 19, 80, 53, 79, 16, 16, 64]
++player1 has discarded a 88 to bag B
++player1 hand is [52, 41, 19, 80, 53, 79, 16, 16, 64]
++player1 has drawn a 38 from bag X
++player1 hand is [52, 41, 19, 80, 53, 79, 16, 16, 64, 38]
++player1 has discarded a 79 to bag A
++player1 hand is [52, 41, 19, 80, 53, 16, 16, 64, 38]
++player1 has drawn a 57 from bag Z
++player1 hand is [52, 41, 19, 80, 53, 16, 16, 64, 38, 57]
++player1 has discarded a 41 to bag C
++player1 hand is [52, 19, 80, 53, 16, 16, 64, 38, 57]
++player1 has drawn a 50 from bag X
++player1 hand is [52, 19, 80, 53, 16, 16, 64, 38, 57, 50]
++player1 has discarded a 19 to bag A
++player1 hand is [52, 80, 53, 16, 16, 64, 38, 57, 50]
++player1 has drawn a 36 from bag X
++player1 hand is [52, 80, 53, 16, 16, 64, 38, 57, 50, 36]
++player1 has discarded a 52 to bag A
++player1 hand is [80, 53, 16, 16, 64, 38, 57, 50, 36]
++player1 has drawn a 84 from bag Y
++player1 hand is [80, 53, 16, 16, 64, 38, 57, 50, 36, 84]
++player1 has discarded a 57 to bag B
++player1 hand is [80, 53, 16, 16, 64, 38, 50, 36, 84]
++player1 has drawn a 57 from bag Y
++player1 hand is [80, 53, 16, 16, 64, 38, 50, 36, 84, 57]
++player1 has discarded a 38 to bag B
++player1 hand is [80, 53, 16, 16, 64, 50, 36, 84, 57]
++player1 has drawn a 74 from bag X
++player1 hand is [80, 53, 16, 16, 64, 50, 36, 84, 57, 74]
++player1 has discarded a 57 to bag A
++player1 hand is [80, 53, 16, 16, 64, 50, 36, 84, 74]
++player1 is filling bagZ with bag C
++player1 has drawn a 31 from bag Z
++player1 hand is [80, 53, 16, 16, 64, 50, 36, 84, 74, 31]
++player1 has discarded a 16 to bag C
++player1 hand is [80, 53, 16, 64, 50, 36, 84, 74, 31]
++player1 has drawn a 53 from bag Z
++player1 hand is [80, 53, 16, 64, 50, 36, 84, 74, 31, 53]
++player1 has discarded a 64 to bag C
++player1 hand is [80, 53, 16, 50, 36, 84, 74, 31, 53]
++player1 has drawn a 82 from bag Z
++player1 hand is [80, 53, 16, 50, 36, 84, 74, 31, 53, 82]
++player1 has discarded a 36 to bag C
++player1 hand is [80, 53, 16, 50, 84, 74, 31, 53, 82]
++player1 has drawn a 69 from bag Z
++player1 hand is [80, 53, 16, 50, 84, 74, 31, 53, 82, 69]
++player1 has discarded a 16 to bag C
++player1 hand is [80, 53, 50, 84, 74, 31, 53, 82, 69]
++player1 has drawn a 32 from bag Z
++player1 hand is [80, 53, 50, 84, 74, 31, 53, 82, 69, 32]
++player1 has discarded a 69 to bag C
++player1 hand is [80, 53, 50, 84, 74, 31, 53, 82, 32]
++player1 has drawn a 23 from bag X
++player1 hand is [80, 53, 50, 84, 74, 31, 53, 82, 32, 23]
++player1 has discarded a 74 to bag A
++player1 hand is [80, 53, 50, 84, 31, 53, 82, 32, 23]
++player1 has drawn a 40 from bag Y
++player1 hand is [80, 53, 50, 84, 31, 53, 82, 32, 23, 40]
++player1 has discarded a 31 to bag B
++player1 hand is [80, 53, 50, 84, 53, 82, 32, 23, 40]
++player1 has drawn a 15 from bag Y
++player1 hand is [80, 53, 50, 84, 53, 82, 32, 23, 40, 15]
++player1 has discarded a 82 to bag B
++player1 hand is [80, 53, 50, 84, 53, 32, 23, 40, 15]
++player1 has drawn a 14 from bag Y
++player1 hand is [80, 53, 50, 84, 53, 32, 23, 40, 15, 14]
++player1 has discarded a 53 to bag B
++player1 hand is [80, 50, 84, 53, 32, 23, 40, 15, 14]
++player1 has drawn a 19 from bag Y
++player1 hand is [80, 50, 84, 53, 32, 23, 40, 15, 14, 19]
++player1 has discarded a 84 to bag B
++player1 hand is [80, 50, 53, 32, 23, 40, 15, 14, 19]
++player1 has drawn a 24 from bag Z
++player1 hand is [80, 50, 53, 32, 23, 40, 15, 14, 19, 24]
++player1 has discarded a 50 to bag C
++player1 hand is [80, 53, 32, 23, 40, 15, 14, 19, 24]
++player1 is filling bagX with bag A
++player1 has drawn a 82 from bag X
++player1 hand is [80, 53, 32, 23, 40, 15, 14, 19, 24, 82]
++player1 has discarded a 15 to bag A
++player1 hand is [80, 53, 32, 23, 40, 14, 19, 24, 82]
++player1 has drawn a 40 from bag Y
++player1 hand is [80, 53, 32, 23, 40, 14, 19, 24, 82, 40]
++player1 has discarded a 40 to bag B
++player1 hand is [80, 53, 32, 23, 40, 14, 19, 24, 82]
++player1 has drawn a 49 from bag X
++player1 hand is [80, 53, 32, 23, 40, 14, 19, 24, 82, 49]
++player1 has discarded a 53 to bag A
++player1 hand is [80, 32, 23, 40, 14, 19, 24, 82, 49]
++player1 has drawn a 70 from bag Z
++player1 hand is [80, 32, 23, 40, 14, 19, 24, 82, 49, 70]
++player1 has discarded a 82 to bag C
++player1 hand is [80, 32, 23, 40, 14, 19, 24, 49, 70]
++
+Index: PebbleGame.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PebbleGame.iml b/PebbleGame.iml
+new file mode 100644
+--- /dev/null	(date 1636492482139)
++++ b/PebbleGame.iml	(date 1636492482139)
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<module type="JAVA_MODULE" version="4">
++  <component name="NewModuleRootManager" inherit-compiler-output="true">
++    <exclude-output />
++    <content url="file://$MODULE_DIR$">
++      <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
++    </content>
++    <orderEntry type="inheritedJdk" />
++    <orderEntry type="sourceFolder" forTests="false" />
++  </component>
++</module>
+\ No newline at end of file
+Index: Player Outputs/player0_output.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Player Outputs/player0_output.txt b/Player Outputs/player0_output.txt
+new file mode 100644
+--- /dev/null	(date 1636503761385)
++++ b/Player Outputs/player0_output.txt	(date 1636503761385)
+@@ -0,0 +1,661 @@
++nullplayer0 has drawn a 7from bag Z
++player0 hand is [7]
++player0 has drawn a 91from bag Z
++player0 hand is [7, 91]
++player0 has drawn a 16from bag Z
++player0 hand is [7, 91, 16]
++player0 has drawn a 68from bag Z
++player0 hand is [7, 91, 16, 68]
++player0 has drawn a 55from bag Z
++player0 hand is [7, 91, 16, 68, 55]
++player0 has drawn a 85from bag Z
++player0 hand is [7, 91, 16, 68, 55, 85]
++player0 has drawn a 28from bag Z
++player0 hand is [7, 91, 16, 68, 55, 85, 28]
++player0 has drawn a 39from bag Z
++player0 hand is [7, 91, 16, 68, 55, 85, 28, 39]
++player0 has drawn a 44from bag Z
++player0 hand is [7, 91, 16, 68, 55, 85, 28, 39, 44]
++player0 has drawn a 83from bag Z
++player0 hand is [7, 91, 16, 68, 55, 85, 28, 39, 44, 83]
++player0 has discarded a 44 to bag C
++player0 hand is [7, 91, 16, 68, 55, 85, 28, 39, 83]
++player0 has drawn a 65 from bag X
++player0 hand is [7, 91, 16, 68, 55, 85, 28, 39, 83, 65]
++player0 has discarded a 16 to bag A
++player0 hand is [7, 91, 68, 55, 85, 28, 39, 83, 65]
++player0 has drawn a 5 from bag X
++player0 hand is [7, 91, 68, 55, 85, 28, 39, 83, 65, 5]
++player0 has discarded a 83 to bag A
++player0 hand is [7, 91, 68, 55, 85, 28, 39, 65, 5]
++player0 has drawn a 87 from bag X
++player0 hand is [7, 91, 68, 55, 85, 28, 39, 65, 5, 87]
++player0 has discarded a 39 to bag A
++player0 hand is [7, 91, 68, 55, 85, 28, 65, 5, 87]
++player0 has drawn a 78 from bag X
++player0 hand is [7, 91, 68, 55, 85, 28, 65, 5, 87, 78]
++player0 has discarded a 68 to bag A
++player0 hand is [7, 91, 55, 85, 28, 65, 5, 87, 78]
++player0 has drawn a 81 from bag Y
++player0 hand is [7, 91, 55, 85, 28, 65, 5, 87, 78, 81]
++player0 has discarded a 65 to bag B
++player0 hand is [7, 91, 55, 85, 28, 5, 87, 78, 81]
++player0 has drawn a 57 from bag Y
++player0 hand is [7, 91, 55, 85, 28, 5, 87, 78, 81, 57]
++player0 has discarded a 78 to bag B
++player0 hand is [7, 91, 55, 85, 28, 5, 87, 81, 57]
++player0 has drawn a 40 from bag Z
++player0 hand is [7, 91, 55, 85, 28, 5, 87, 81, 57, 40]
++player0 has discarded a 28 to bag C
++player0 hand is [7, 91, 55, 85, 5, 87, 81, 57, 40]
++player0 has drawn a 10 from bag Y
++player0 hand is [7, 91, 55, 85, 5, 87, 81, 57, 40, 10]
++player0 has discarded a 40 to bag B
++player0 hand is [7, 91, 55, 85, 5, 87, 81, 57, 10]
++player0 has drawn a 13 from bag X
++player0 hand is [7, 91, 55, 85, 5, 87, 81, 57, 10, 13]
++player0 has discarded a 81 to bag A
++player0 hand is [7, 91, 55, 85, 5, 87, 57, 10, 13]
++player0 has drawn a 53 from bag X
++player0 hand is [7, 91, 55, 85, 5, 87, 57, 10, 13, 53]
++player0 has discarded a 85 to bag A
++player0 hand is [7, 91, 55, 5, 87, 57, 10, 13, 53]
++player0 has drawn a 32 from bag Z
++player0 hand is [7, 91, 55, 5, 87, 57, 10, 13, 53, 32]
++player0 has discarded a 55 to bag C
++player0 hand is [7, 91, 5, 87, 57, 10, 13, 53, 32]
++player0 has drawn a 10 from bag X
++player0 hand is [7, 91, 5, 87, 57, 10, 13, 53, 32, 10]
++player0 has discarded a 7 to bag A
++player0 hand is [91, 5, 87, 57, 10, 13, 53, 32, 10]
++player0 has drawn a 7 from bag X
++player0 hand is [91, 5, 87, 57, 10, 13, 53, 32, 10, 7]
++player0 has discarded a 5 to bag A
++player0 hand is [91, 87, 57, 10, 13, 53, 32, 10, 7]
++player0 has drawn a 92 from bag Y
++player0 hand is [91, 87, 57, 10, 13, 53, 32, 10, 7, 92]
++player0 has discarded a 87 to bag B
++player0 hand is [91, 57, 10, 13, 53, 32, 10, 7, 92]
++player0 has drawn a 29 from bag X
++player0 hand is [91, 57, 10, 13, 53, 32, 10, 7, 92, 29]
++player0 has discarded a 7 to bag A
++player0 hand is [91, 57, 10, 13, 53, 32, 10, 92, 29]
++player0 has drawn a 13 from bag Z
++player0 hand is [91, 57, 10, 13, 53, 32, 10, 92, 29, 13]
++player0 has discarded a 10 to bag C
++player0 hand is [91, 57, 10, 13, 53, 32, 92, 29, 13]
++player0 has drawn a 77 from bag X
++player0 hand is [91, 57, 10, 13, 53, 32, 92, 29, 13, 77]
++player0 has discarded a 53 to bag A
++player0 hand is [91, 57, 10, 13, 32, 92, 29, 13, 77]
++player0 has drawn a 94 from bag Y
++player0 hand is [91, 57, 10, 13, 32, 92, 29, 13, 77, 94]
++player0 has discarded a 94 to bag B
++player0 hand is [91, 57, 10, 13, 32, 92, 29, 13, 77]
++player0 has drawn a 20 from bag Y
++player0 hand is [91, 57, 10, 13, 32, 92, 29, 13, 77, 20]
++player0 has discarded a 57 to bag B
++player0 hand is [91, 10, 13, 32, 92, 29, 13, 77, 20]
++player0 has drawn a 71 from bag Z
++player0 hand is [91, 10, 13, 32, 92, 29, 13, 77, 20, 71]
++player0 has discarded a 32 to bag C
++player0 hand is [91, 10, 13, 92, 29, 13, 77, 20, 71]
++player0 has drawn a 12 from bag X
++player0 hand is [91, 10, 13, 92, 29, 13, 77, 20, 71, 12]
++player0 has discarded a 77 to bag A
++player0 hand is [91, 10, 13, 92, 29, 13, 20, 71, 12]
++player0 has drawn a 31 from bag Z
++player0 hand is [91, 10, 13, 92, 29, 13, 20, 71, 12, 31]
++player0 has discarded a 12 to bag C
++player0 hand is [91, 10, 13, 92, 29, 13, 20, 71, 31]
++player0 has drawn a 89 from bag Y
++player0 hand is [91, 10, 13, 92, 29, 13, 20, 71, 31, 89]
++player0 has discarded a 92 to bag B
++player0 hand is [91, 10, 13, 29, 13, 20, 71, 31, 89]
++player0 has drawn a 100 from bag X
++player0 hand is [91, 10, 13, 29, 13, 20, 71, 31, 89, 100]
++player0 has discarded a 91 to bag A
++player0 hand is [10, 13, 29, 13, 20, 71, 31, 89, 100]
++player0 has drawn a 50 from bag Y
++player0 hand is [10, 13, 29, 13, 20, 71, 31, 89, 100, 50]
++player0 has discarded a 10 to bag B
++player0 hand is [13, 29, 13, 20, 71, 31, 89, 100, 50]
++player0 has drawn a 20 from bag Z
++player0 hand is [13, 29, 13, 20, 71, 31, 89, 100, 50, 20]
++player0 has discarded a 20 to bag C
++player0 hand is [13, 29, 13, 71, 31, 89, 100, 50, 20]
++player0 has drawn a 55 from bag Y
++player0 hand is [13, 29, 13, 71, 31, 89, 100, 50, 20, 55]
++player0 has discarded a 55 to bag B
++player0 hand is [13, 29, 13, 71, 31, 89, 100, 50, 20]
++player0 has drawn a 19 from bag Y
++player0 hand is [13, 29, 13, 71, 31, 89, 100, 50, 20, 19]
++player0 has discarded a 89 to bag B
++player0 hand is [13, 29, 13, 71, 31, 100, 50, 20, 19]
++player0 has drawn a 51 from bag Y
++player0 hand is [13, 29, 13, 71, 31, 100, 50, 20, 19, 51]
++player0 has discarded a 13 to bag B
++player0 hand is [29, 13, 71, 31, 100, 50, 20, 19, 51]
++player0 has drawn a 76 from bag Z
++player0 hand is [29, 13, 71, 31, 100, 50, 20, 19, 51, 76]
++player0 has discarded a 50 to bag C
++player0 hand is [29, 13, 71, 31, 100, 20, 19, 51, 76]
++player0 has drawn a 17 from bag X
++player0 hand is [29, 13, 71, 31, 100, 20, 19, 51, 76, 17]
++player0 has discarded a 51 to bag A
++player0 hand is [29, 13, 71, 31, 100, 20, 19, 76, 17]
++player0 has drawn a 92 from bag X
++player0 hand is [29, 13, 71, 31, 100, 20, 19, 76, 17, 92]
++player0 has discarded a 71 to bag A
++player0 hand is [29, 13, 31, 100, 20, 19, 76, 17, 92]
++player0 has drawn a 28 from bag Y
++player0 hand is [29, 13, 31, 100, 20, 19, 76, 17, 92, 28]
++player0 has discarded a 92 to bag B
++player0 hand is [29, 13, 31, 100, 20, 19, 76, 17, 28]
++player0 has drawn a 54 from bag X
++player0 hand is [29, 13, 31, 100, 20, 19, 76, 17, 28, 54]
++player0 has discarded a 76 to bag A
++player0 hand is [29, 13, 31, 100, 20, 19, 17, 28, 54]
++player0 has drawn a 15 from bag Y
++player0 hand is [29, 13, 31, 100, 20, 19, 17, 28, 54, 15]
++player0 has discarded a 29 to bag B
++player0 hand is [13, 31, 100, 20, 19, 17, 28, 54, 15]
++player0 has drawn a 11 from bag X
++player0 hand is [13, 31, 100, 20, 19, 17, 28, 54, 15, 11]
++player0 has discarded a 13 to bag A
++player0 hand is [31, 100, 20, 19, 17, 28, 54, 15, 11]
++player0 has drawn a 61 from bag Y
++player0 hand is [31, 100, 20, 19, 17, 28, 54, 15, 11, 61]
++player0 has discarded a 31 to bag B
++player0 hand is [100, 20, 19, 17, 28, 54, 15, 11, 61]
++player0 has drawn a 51 from bag X
++player0 hand is [100, 20, 19, 17, 28, 54, 15, 11, 61, 51]
++player0 has discarded a 54 to bag A
++player0 hand is [100, 20, 19, 17, 28, 15, 11, 61, 51]
++player0 has drawn a 6 from bag Y
++player0 hand is [100, 20, 19, 17, 28, 15, 11, 61, 51, 6]
++player0 has discarded a 17 to bag B
++player0 hand is [100, 20, 19, 28, 15, 11, 61, 51, 6]
++player0 has drawn a 49 from bag X
++player0 hand is [100, 20, 19, 28, 15, 11, 61, 51, 6, 49]
++player0 has discarded a 6 to bag A
++player0 hand is [100, 20, 19, 28, 15, 11, 61, 51, 49]
++player0 has drawn a 37 from bag Z
++player0 hand is [100, 20, 19, 28, 15, 11, 61, 51, 49, 37]
++player0 has discarded a 100 to bag C
++player0 hand is [20, 19, 28, 15, 11, 61, 51, 49, 37]
++player0 has drawn a 56 from bag Z
++player0 hand is [20, 19, 28, 15, 11, 61, 51, 49, 37, 56]
++player0 has discarded a 20 to bag C
++player0 hand is [19, 28, 15, 11, 61, 51, 49, 37, 56]
++player0 has drawn a 14 from bag Y
++player0 hand is [19, 28, 15, 11, 61, 51, 49, 37, 56, 14]
++player0 has discarded a 19 to bag B
++player0 hand is [28, 15, 11, 61, 51, 49, 37, 56, 14]
++player0 has drawn a 31 from bag Y
++player0 hand is [28, 15, 11, 61, 51, 49, 37, 56, 14, 31]
++player0 has discarded a 61 to bag B
++player0 hand is [28, 15, 11, 51, 49, 37, 56, 14, 31]
++player0 has drawn a 74 from bag Z
++player0 hand is [28, 15, 11, 51, 49, 37, 56, 14, 31, 74]
++player0 has discarded a 56 to bag C
++player0 hand is [28, 15, 11, 51, 49, 37, 14, 31, 74]
++player0 has drawn a 32 from bag X
++player0 hand is [28, 15, 11, 51, 49, 37, 14, 31, 74, 32]
++player0 has discarded a 32 to bag A
++player0 hand is [28, 15, 11, 51, 49, 37, 14, 31, 74]
++player0 has drawn a 1 from bag X
++player0 hand is [28, 15, 11, 51, 49, 37, 14, 31, 74, 1]
++player0 has discarded a 14 to bag A
++player0 hand is [28, 15, 11, 51, 49, 37, 31, 74, 1]
++player0 has drawn a 42 from bag Y
++player0 hand is [28, 15, 11, 51, 49, 37, 31, 74, 1, 42]
++player0 has discarded a 49 to bag B
++player0 hand is [28, 15, 11, 51, 37, 31, 74, 1, 42]
++player0 has drawn a 56 from bag Y
++player0 hand is [28, 15, 11, 51, 37, 31, 74, 1, 42, 56]
++player0 has discarded a 56 to bag B
++player0 hand is [28, 15, 11, 51, 37, 31, 74, 1, 42]
++player0 has drawn a 62 from bag X
++player0 hand is [28, 15, 11, 51, 37, 31, 74, 1, 42, 62]
++player0 has discarded a 28 to bag A
++player0 hand is [15, 11, 51, 37, 31, 74, 1, 42, 62]
++player0 has drawn a 60 from bag Z
++player0 hand is [15, 11, 51, 37, 31, 74, 1, 42, 62, 60]
++player0 has discarded a 51 to bag C
++player0 hand is [15, 11, 37, 31, 74, 1, 42, 62, 60]
++player0 has drawn a 56 from bag X
++player0 hand is [15, 11, 37, 31, 74, 1, 42, 62, 60, 56]
++player0 has discarded a 74 to bag A
++player0 hand is [15, 11, 37, 31, 1, 42, 62, 60, 56]
++player0 has drawn a 100 from bag Z
++player0 hand is [15, 11, 37, 31, 1, 42, 62, 60, 56, 100]
++player0 has discarded a 31 to bag C
++player0 hand is [15, 11, 37, 1, 42, 62, 60, 56, 100]
++player0 has drawn a 80 from bag Y
++player0 hand is [15, 11, 37, 1, 42, 62, 60, 56, 100, 80]
++player0 has discarded a 1 to bag B
++player0 hand is [15, 11, 37, 42, 62, 60, 56, 100, 80]
++player0 has drawn a 96 from bag Y
++player0 hand is [15, 11, 37, 42, 62, 60, 56, 100, 80, 96]
++player0 has discarded a 80 to bag B
++player0 hand is [15, 11, 37, 42, 62, 60, 56, 100, 96]
++player0 has drawn a 27 from bag Z
++player0 hand is [15, 11, 37, 42, 62, 60, 56, 100, 96, 27]
++player0 has discarded a 11 to bag C
++player0 hand is [15, 37, 42, 62, 60, 56, 100, 96, 27]
++player0 has drawn a 34 from bag Z
++player0 hand is [15, 37, 42, 62, 60, 56, 100, 96, 27, 34]
++player0 has discarded a 100 to bag C
++player0 hand is [15, 37, 42, 62, 60, 56, 96, 27, 34]
++player0 has drawn a 61 from bag X
++player0 hand is [15, 37, 42, 62, 60, 56, 96, 27, 34, 61]
++player0 has discarded a 61 to bag A
++player0 hand is [15, 37, 42, 62, 60, 56, 96, 27, 34]
++player0 has drawn a 72 from bag Y
++player0 hand is [15, 37, 42, 62, 60, 56, 96, 27, 34, 72]
++player0 has discarded a 37 to bag B
++player0 hand is [15, 42, 62, 60, 56, 96, 27, 34, 72]
++player0 has drawn a 83 from bag Y
++player0 hand is [15, 42, 62, 60, 56, 96, 27, 34, 72, 83]
++player0 has discarded a 42 to bag B
++player0 hand is [15, 62, 60, 56, 96, 27, 34, 72, 83]
++player0 has drawn a 75 from bag X
++player0 hand is [15, 62, 60, 56, 96, 27, 34, 72, 83, 75]
++player0 has discarded a 34 to bag A
++player0 hand is [15, 62, 60, 56, 96, 27, 72, 83, 75]
++player0 has drawn a 72 from bag Z
++player0 hand is [15, 62, 60, 56, 96, 27, 72, 83, 75, 72]
++player0 has discarded a 96 to bag C
++player0 hand is [15, 62, 60, 56, 27, 72, 83, 75, 72]
++player0 has drawn a 69 from bag Y
++player0 hand is [15, 62, 60, 56, 27, 72, 83, 75, 72, 69]
++player0 has discarded a 15 to bag B
++player0 hand is [62, 60, 56, 27, 72, 83, 75, 72, 69]
++player0 has drawn a 100 from bag Y
++player0 hand is [62, 60, 56, 27, 72, 83, 75, 72, 69, 100]
++player0 has discarded a 69 to bag B
++player0 hand is [62, 60, 56, 27, 72, 83, 75, 72, 100]
++player0 has drawn a 95 from bag Y
++player0 hand is [62, 60, 56, 27, 72, 83, 75, 72, 100, 95]
++player0 has discarded a 62 to bag B
++player0 hand is [60, 56, 27, 72, 83, 75, 72, 100, 95]
++player0 has drawn a 82 from bag Y
++player0 hand is [60, 56, 27, 72, 83, 75, 72, 100, 95, 82]
++player0 has discarded a 72 to bag B
++player0 hand is [60, 56, 27, 83, 75, 72, 100, 95, 82]
++player0 has drawn a 69 from bag X
++player0 hand is [60, 56, 27, 83, 75, 72, 100, 95, 82, 69]
++player0 has discarded a 69 to bag A
++player0 hand is [60, 56, 27, 83, 75, 72, 100, 95, 82]
++player0 has drawn a 84 from bag Y
++player0 hand is [60, 56, 27, 83, 75, 72, 100, 95, 82, 84]
++player0 has discarded a 83 to bag B
++player0 hand is [60, 56, 27, 75, 72, 100, 95, 82, 84]
++player0 has drawn a 41 from bag Y
++player0 hand is [60, 56, 27, 75, 72, 100, 95, 82, 84, 41]
++player0 has discarded a 75 to bag B
++player0 hand is [60, 56, 27, 72, 100, 95, 82, 84, 41]
++player0 has drawn a 95 from bag X
++player0 hand is [60, 56, 27, 72, 100, 95, 82, 84, 41, 95]
++player0 has discarded a 27 to bag A
++player0 hand is [60, 56, 72, 100, 95, 82, 84, 41, 95]
++player0 has drawn a 6 from bag X
++player0 hand is [60, 56, 72, 100, 95, 82, 84, 41, 95, 6]
++player0 has discarded a 95 to bag A
++player0 hand is [60, 56, 72, 100, 82, 84, 41, 95, 6]
++player0 has drawn a 68 from bag Y
++player0 hand is [60, 56, 72, 100, 82, 84, 41, 95, 6, 68]
++player0 has discarded a 84 to bag B
++player0 hand is [60, 56, 72, 100, 82, 41, 95, 6, 68]
++player0 has drawn a 38 from bag Z
++player0 hand is [60, 56, 72, 100, 82, 41, 95, 6, 68, 38]
++player0 has discarded a 38 to bag C
++player0 hand is [60, 56, 72, 100, 82, 41, 95, 6, 68]
++player0 has drawn a 60 from bag X
++player0 hand is [60, 56, 72, 100, 82, 41, 95, 6, 68, 60]
++player0 has discarded a 56 to bag A
++player0 hand is [60, 72, 100, 82, 41, 95, 6, 68, 60]
++player0 has drawn a 31 from bag X
++player0 hand is [60, 72, 100, 82, 41, 95, 6, 68, 60, 31]
++player0 has discarded a 68 to bag A
++player0 hand is [60, 72, 100, 82, 41, 95, 6, 60, 31]
++player0 has drawn a 86 from bag X
++player0 hand is [60, 72, 100, 82, 41, 95, 6, 60, 31, 86]
++player0 has discarded a 41 to bag A
++player0 hand is [60, 72, 100, 82, 95, 6, 60, 31, 86]
++player0 has drawn a 63 from bag Y
++player0 hand is [60, 72, 100, 82, 95, 6, 60, 31, 86, 63]
++player0 has discarded a 86 to bag B
++player0 hand is [60, 72, 100, 82, 95, 6, 60, 31, 63]
++player0 has drawn a 68 from bag X
++player0 hand is [60, 72, 100, 82, 95, 6, 60, 31, 63, 68]
++player0 has discarded a 72 to bag A
++player0 hand is [60, 100, 82, 95, 6, 60, 31, 63, 68]
++player0 has drawn a 14 from bag X
++player0 hand is [60, 100, 82, 95, 6, 60, 31, 63, 68, 14]
++player0 has discarded a 31 to bag A
++player0 hand is [60, 100, 82, 95, 6, 60, 63, 68, 14]
++player0 has drawn a 1 from bag Z
++player0 hand is [60, 100, 82, 95, 6, 60, 63, 68, 14, 1]
++player0 has discarded a 68 to bag C
++player0 hand is [60, 100, 82, 95, 6, 60, 63, 14, 1]
++player0 has drawn a 23 from bag Z
++player0 hand is [60, 100, 82, 95, 6, 60, 63, 14, 1, 23]
++player0 has discarded a 6 to bag C
++player0 hand is [60, 100, 82, 95, 60, 63, 14, 1, 23]
++player0 has drawn a 98 from bag Z
++player0 hand is [60, 100, 82, 95, 60, 63, 14, 1, 23, 98]
++player0 has discarded a 1 to bag C
++player0 hand is [60, 100, 82, 95, 60, 63, 14, 23, 98]
++player0 has drawn a 52 from bag X
++player0 hand is [60, 100, 82, 95, 60, 63, 14, 23, 98, 52]
++player0 has discarded a 14 to bag A
++player0 hand is [60, 100, 82, 95, 60, 63, 23, 98, 52]
++player0 has drawn a 71 from bag X
++player0 hand is [60, 100, 82, 95, 60, 63, 23, 98, 52, 71]
++player0 has discarded a 63 to bag A
++player0 hand is [60, 100, 82, 95, 60, 23, 98, 52, 71]
++player0 has drawn a 49 from bag Z
++player0 hand is [60, 100, 82, 95, 60, 23, 98, 52, 71, 49]
++player0 has discarded a 100 to bag C
++player0 hand is [60, 82, 95, 60, 23, 98, 52, 71, 49]
++player0 has drawn a 67 from bag Y
++player0 hand is [60, 82, 95, 60, 23, 98, 52, 71, 49, 67]
++player0 has discarded a 98 to bag B
++player0 hand is [60, 82, 95, 60, 23, 52, 71, 49, 67]
++player0 has drawn a 24 from bag Z
++player0 hand is [60, 82, 95, 60, 23, 52, 71, 49, 67, 24]
++player0 has discarded a 60 to bag C
++player0 hand is [82, 95, 60, 23, 52, 71, 49, 67, 24]
++player0 has drawn a 2 from bag Z
++player0 hand is [82, 95, 60, 23, 52, 71, 49, 67, 24, 2]
++player0 has discarded a 2 to bag C
++player0 hand is [82, 95, 60, 23, 52, 71, 49, 67, 24]
++player0 has drawn a 18 from bag Z
++player0 hand is [82, 95, 60, 23, 52, 71, 49, 67, 24, 18]
++player0 has discarded a 24 to bag C
++player0 hand is [82, 95, 60, 23, 52, 71, 49, 67, 18]
++player0 has drawn a 76 from bag X
++player0 hand is [82, 95, 60, 23, 52, 71, 49, 67, 18, 76]
++player0 has discarded a 52 to bag A
++player0 hand is [82, 95, 60, 23, 71, 49, 67, 18, 76]
++player0 has drawn a 33 from bag Z
++player0 hand is [82, 95, 60, 23, 71, 49, 67, 18, 76, 33]
++player0 has discarded a 95 to bag C
++player0 hand is [82, 60, 23, 71, 49, 67, 18, 76, 33]
++player0 has drawn a 79 from bag Y
++player0 hand is [82, 60, 23, 71, 49, 67, 18, 76, 33, 79]
++player0 has discarded a 71 to bag B
++player0 hand is [82, 60, 23, 49, 67, 18, 76, 33, 79]
++player0 has drawn a 9 from bag Z
++player0 hand is [82, 60, 23, 49, 67, 18, 76, 33, 79, 9]
++player0 has discarded a 18 to bag C
++player0 hand is [82, 60, 23, 49, 67, 76, 33, 79, 9]
++player0 has drawn a 92 from bag Z
++player0 hand is [82, 60, 23, 49, 67, 76, 33, 79, 9, 92]
++player0 has discarded a 9 to bag C
++player0 hand is [82, 60, 23, 49, 67, 76, 33, 79, 92]
++player0 has drawn a 10 from bag Z
++player0 hand is [82, 60, 23, 49, 67, 76, 33, 79, 92, 10]
++player0 has discarded a 33 to bag C
++player0 hand is [82, 60, 23, 49, 67, 76, 79, 92, 10]
++player0 has drawn a 91 from bag X
++player0 hand is [82, 60, 23, 49, 67, 76, 79, 92, 10, 91]
++player0 has discarded a 91 to bag A
++player0 hand is [82, 60, 23, 49, 67, 76, 79, 92, 10]
++player0 has drawn a 16 from bag Y
++player0 hand is [82, 60, 23, 49, 67, 76, 79, 92, 10, 16]
++player0 has discarded a 16 to bag B
++player0 hand is [82, 60, 23, 49, 67, 76, 79, 92, 10]
++player0 has drawn a 50 from bag Z
++player0 hand is [82, 60, 23, 49, 67, 76, 79, 92, 10, 50]
++player0 has discarded a 67 to bag C
++player0 hand is [82, 60, 23, 49, 76, 79, 92, 10, 50]
++player0 has drawn a 23 from bag Y
++player0 hand is [82, 60, 23, 49, 76, 79, 92, 10, 50, 23]
++player0 has discarded a 23 to bag B
++player0 hand is [82, 60, 49, 76, 79, 92, 10, 50, 23]
++player0 has drawn a 1 from bag Y
++player0 hand is [82, 60, 49, 76, 79, 92, 10, 50, 23, 1]
++player0 has discarded a 76 to bag B
++player0 hand is [82, 60, 49, 79, 92, 10, 50, 23, 1]
++player0 has drawn a 4 from bag X
++player0 hand is [82, 60, 49, 79, 92, 10, 50, 23, 1, 4]
++player0 has discarded a 1 to bag A
++player0 hand is [82, 60, 49, 79, 92, 10, 50, 23, 4]
++player0 has drawn a 77 from bag Z
++player0 hand is [82, 60, 49, 79, 92, 10, 50, 23, 4, 77]
++player0 has discarded a 50 to bag C
++player0 hand is [82, 60, 49, 79, 92, 10, 23, 4, 77]
++player0 has drawn a 85 from bag X
++player0 hand is [82, 60, 49, 79, 92, 10, 23, 4, 77, 85]
++player0 has discarded a 77 to bag A
++player0 hand is [82, 60, 49, 79, 92, 10, 23, 4, 85]
++player0 has drawn a 8 from bag Z
++player0 hand is [82, 60, 49, 79, 92, 10, 23, 4, 85, 8]
++player0 has discarded a 85 to bag C
++player0 hand is [82, 60, 49, 79, 92, 10, 23, 4, 8]
++player0 has drawn a 73 from bag Y
++player0 hand is [82, 60, 49, 79, 92, 10, 23, 4, 8, 73]
++player0 has discarded a 49 to bag B
++player0 hand is [82, 60, 79, 92, 10, 23, 4, 8, 73]
++player0 has drawn a 78 from bag Z
++player0 hand is [82, 60, 79, 92, 10, 23, 4, 8, 73, 78]
++player0 has discarded a 8 to bag C
++player0 hand is [82, 60, 79, 92, 10, 23, 4, 73, 78]
++player0 has drawn a 9 from bag X
++player0 hand is [82, 60, 79, 92, 10, 23, 4, 73, 78, 9]
++player0 has discarded a 4 to bag A
++player0 hand is [82, 60, 79, 92, 10, 23, 73, 78, 9]
++player0 has drawn a 54 from bag Z
++player0 hand is [82, 60, 79, 92, 10, 23, 73, 78, 9, 54]
++player0 has discarded a 78 to bag C
++player0 hand is [82, 60, 79, 92, 10, 23, 73, 9, 54]
++player0 has drawn a 67 from bag X
++player0 hand is [82, 60, 79, 92, 10, 23, 73, 9, 54, 67]
++player0 has discarded a 67 to bag A
++player0 hand is [82, 60, 79, 92, 10, 23, 73, 9, 54]
++player0 has drawn a 47 from bag Y
++player0 hand is [82, 60, 79, 92, 10, 23, 73, 9, 54, 47]
++player0 has discarded a 47 to bag B
++player0 hand is [82, 60, 79, 92, 10, 23, 73, 9, 54]
++player0 has drawn a 61 from bag Z
++player0 hand is [82, 60, 79, 92, 10, 23, 73, 9, 54, 61]
++player0 has discarded a 82 to bag C
++player0 hand is [60, 79, 92, 10, 23, 73, 9, 54, 61]
++player0 has drawn a 40 from bag X
++player0 hand is [60, 79, 92, 10, 23, 73, 9, 54, 61, 40]
++player0 has discarded a 73 to bag A
++player0 hand is [60, 79, 92, 10, 23, 9, 54, 61, 40]
++player0 has drawn a 2 from bag Y
++player0 hand is [60, 79, 92, 10, 23, 9, 54, 61, 40, 2]
++player0 has discarded a 92 to bag B
++player0 hand is [60, 79, 10, 23, 9, 54, 61, 40, 2]
++player0 has drawn a 17 from bag Y
++player0 hand is [60, 79, 10, 23, 9, 54, 61, 40, 2, 17]
++player0 has discarded a 54 to bag B
++player0 hand is [60, 79, 10, 23, 9, 61, 40, 2, 17]
++player0 has drawn a 3 from bag Y
++player0 hand is [60, 79, 10, 23, 9, 61, 40, 2, 17, 3]
++player0 has discarded a 61 to bag B
++player0 hand is [60, 79, 10, 23, 9, 40, 2, 17, 3]
++player0 has drawn a 84 from bag X
++player0 hand is [60, 79, 10, 23, 9, 40, 2, 17, 3, 84]
++player0 has discarded a 79 to bag A
++player0 hand is [60, 10, 23, 9, 40, 2, 17, 3, 84]
++player0 has drawn a 90 from bag Y
++player0 hand is [60, 10, 23, 9, 40, 2, 17, 3, 84, 90]
++player0 has discarded a 84 to bag B
++player0 hand is [60, 10, 23, 9, 40, 2, 17, 3, 90]
++player0 has drawn a 58 from bag Y
++player0 hand is [60, 10, 23, 9, 40, 2, 17, 3, 90, 58]
++player0 has discarded a 3 to bag B
++player0 hand is [60, 10, 23, 9, 40, 2, 17, 90, 58]
++player0 has drawn a 3 from bag X
++player0 hand is [60, 10, 23, 9, 40, 2, 17, 90, 58, 3]
++player0 has discarded a 17 to bag A
++player0 hand is [60, 10, 23, 9, 40, 2, 90, 58, 3]
++player0 has drawn a 22 from bag X
++player0 hand is [60, 10, 23, 9, 40, 2, 90, 58, 3, 22]
++player0 has discarded a 60 to bag A
++player0 hand is [10, 23, 9, 40, 2, 90, 58, 3, 22]
++player0 has drawn a 51 from bag Z
++player0 hand is [10, 23, 9, 40, 2, 90, 58, 3, 22, 51]
++player0 has discarded a 3 to bag C
++player0 hand is [10, 23, 9, 40, 2, 90, 58, 22, 51]
++player0 has drawn a 27 from bag Y
++player0 hand is [10, 23, 9, 40, 2, 90, 58, 22, 51, 27]
++player0 has discarded a 2 to bag B
++player0 hand is [10, 23, 9, 40, 90, 58, 22, 51, 27]
++player0 has drawn a 58 from bag X
++player0 hand is [10, 23, 9, 40, 90, 58, 22, 51, 27, 58]
++player0 has discarded a 27 to bag A
++player0 hand is [10, 23, 9, 40, 90, 58, 22, 51, 58]
++player0 has drawn a 97 from bag X
++player0 hand is [10, 23, 9, 40, 90, 58, 22, 51, 58, 97]
++player0 has discarded a 58 to bag A
++player0 hand is [10, 23, 9, 40, 90, 22, 51, 58, 97]
++player0 has drawn a 99 from bag X
++player0 hand is [10, 23, 9, 40, 90, 22, 51, 58, 97, 99]
++player0 has discarded a 22 to bag A
++player0 hand is [10, 23, 9, 40, 90, 51, 58, 97, 99]
++player0 is filling bagY with bag B
++player0 has drawn a 89 from bag Y
++player0 hand is [10, 23, 9, 40, 90, 51, 58, 97, 99, 89]
++player0 has discarded a 40 to bag B
++player0 hand is [10, 23, 9, 90, 51, 58, 97, 99, 89]
++player0 has drawn a 2 from bag Y
++player0 hand is [10, 23, 9, 90, 51, 58, 97, 99, 89, 2]
++player0 has discarded a 97 to bag B
++player0 hand is [10, 23, 9, 90, 51, 58, 99, 89, 2]
++player0 has drawn a 21 from bag Z
++player0 hand is [10, 23, 9, 90, 51, 58, 99, 89, 2, 21]
++player0 has discarded a 9 to bag C
++player0 hand is [10, 23, 90, 51, 58, 99, 89, 2, 21]
++player0 has drawn a 89 from bag Z
++player0 hand is [10, 23, 90, 51, 58, 99, 89, 2, 21, 89]
++player0 has discarded a 99 to bag C
++player0 hand is [10, 23, 90, 51, 58, 89, 2, 21, 89]
++player0 has drawn a 96 from bag X
++player0 hand is [10, 23, 90, 51, 58, 89, 2, 21, 89, 96]
++player0 has discarded a 90 to bag A
++player0 hand is [10, 23, 51, 58, 89, 2, 21, 89, 96]
++player0 has drawn a 66 from bag Z
++player0 hand is [10, 23, 51, 58, 89, 2, 21, 89, 96, 66]
++player0 has discarded a 23 to bag C
++player0 hand is [10, 51, 58, 89, 2, 21, 89, 96, 66]
++player0 has drawn a 98 from bag Y
++player0 hand is [10, 51, 58, 89, 2, 21, 89, 96, 66, 98]
++player0 has discarded a 51 to bag B
++player0 hand is [10, 58, 89, 2, 21, 89, 96, 66, 98]
++player0 has drawn a 93 from bag Y
++player0 hand is [10, 58, 89, 2, 21, 89, 96, 66, 98, 93]
++player0 has discarded a 2 to bag B
++player0 hand is [10, 58, 89, 21, 89, 96, 66, 98, 93]
++player0 has drawn a 97 from bag Y
++player0 hand is [10, 58, 89, 21, 89, 96, 66, 98, 93, 97]
++player0 has discarded a 89 to bag B
++player0 hand is [10, 58, 89, 21, 96, 66, 98, 93, 97]
++player0 has drawn a 73 from bag X
++player0 hand is [10, 58, 89, 21, 96, 66, 98, 93, 97, 73]
++player0 has discarded a 96 to bag A
++player0 hand is [10, 58, 89, 21, 66, 98, 93, 97, 73]
++player0 has drawn a 83 from bag X
++player0 hand is [10, 58, 89, 21, 66, 98, 93, 97, 73, 83]
++player0 has discarded a 10 to bag A
++player0 hand is [58, 89, 21, 66, 98, 93, 97, 73, 83]
++player0 has drawn a 34 from bag X
++player0 hand is [58, 89, 21, 66, 98, 93, 97, 73, 83, 34]
++player0 has discarded a 66 to bag A
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 83, 34]
++player0 has drawn a 90 from bag X
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 83, 34, 90]
++player0 has discarded a 34 to bag A
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 83, 90]
++player0 has drawn a 76 from bag Y
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 83, 90, 76]
++player0 has discarded a 83 to bag B
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 90, 76]
++player0 has drawn a 20 from bag Z
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 90, 76, 20]
++player0 has discarded a 20 to bag C
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 90, 76]
++player0 has drawn a 42 from bag X
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 90, 76, 42]
++player0 has discarded a 90 to bag A
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 76, 42]
++player0 has drawn a 59 from bag X
++player0 hand is [58, 89, 21, 98, 93, 97, 73, 76, 42, 59]
++player0 has discarded a 73 to bag A
++player0 hand is [58, 89, 21, 98, 93, 97, 76, 42, 59]
++player0 has drawn a 57 from bag X
++player0 hand is [58, 89, 21, 98, 93, 97, 76, 42, 59, 57]
++player0 has discarded a 89 to bag A
++player0 hand is [58, 21, 98, 93, 97, 76, 42, 59, 57]
++player0 has drawn a 60 from bag Z
++player0 hand is [58, 21, 98, 93, 97, 76, 42, 59, 57, 60]
++player0 has discarded a 42 to bag C
++player0 hand is [58, 21, 98, 93, 97, 76, 59, 57, 60]
++player0 has drawn a 39 from bag Z
++player0 hand is [58, 21, 98, 93, 97, 76, 59, 57, 60, 39]
++player0 has discarded a 57 to bag C
++player0 hand is [58, 21, 98, 93, 97, 76, 59, 60, 39]
++player0 has drawn a 87 from bag Y
++player0 hand is [58, 21, 98, 93, 97, 76, 59, 60, 39, 87]
++player0 has discarded a 98 to bag B
++player0 hand is [58, 21, 93, 97, 76, 59, 60, 39, 87]
++player0 has drawn a 48 from bag X
++player0 hand is [58, 21, 93, 97, 76, 59, 60, 39, 87, 48]
++player0 has discarded a 76 to bag A
++player0 hand is [58, 21, 93, 97, 59, 60, 39, 87, 48]
++player0 is filling bagX with bag A
++player0 has drawn a 59 from bag X
++player0 hand is [58, 21, 93, 97, 59, 60, 39, 87, 48, 59]
++player0 has discarded a 48 to bag A
++player0 hand is [58, 21, 93, 97, 59, 60, 39, 87, 59]
++player0 has drawn a 50 from bag Z
++player0 hand is [58, 21, 93, 97, 59, 60, 39, 87, 59, 50]
++player0 has discarded a 59 to bag C
++player0 hand is [58, 21, 93, 97, 60, 39, 87, 59, 50]
++player0 has drawn a 65 from bag Y
++player0 hand is [58, 21, 93, 97, 60, 39, 87, 59, 50, 65]
++player0 has discarded a 39 to bag B
++player0 hand is [58, 21, 93, 97, 60, 87, 59, 50, 65]
++player0 has drawn a 2 from bag Z
++player0 hand is [58, 21, 93, 97, 60, 87, 59, 50, 65, 2]
++player0 has discarded a 2 to bag C
++player0 hand is [58, 21, 93, 97, 60, 87, 59, 50, 65]
++player0 has drawn a 59 from bag Z
++player0 hand is [58, 21, 93, 97, 60, 87, 59, 50, 65, 59]
++player0 has discarded a 59 to bag C
++player0 hand is [58, 21, 93, 97, 60, 87, 59, 50, 65]
++player0 has drawn a 18 from bag X
++player0 hand is [58, 21, 93, 97, 60, 87, 59, 50, 65, 18]
++player0 has discarded a 59 to bag A
++player0 hand is [58, 21, 93, 97, 60, 87, 50, 65, 18]
++player0 has drawn a 92 from bag Y
++player0 hand is [58, 21, 93, 97, 60, 87, 50, 65, 18, 92]
++player0 has discarded a 50 to bag B
++player0 hand is [58, 21, 93, 97, 60, 87, 65, 18, 92]
++player0 has drawn a 46 from bag Y
++player0 hand is [58, 21, 93, 97, 60, 87, 65, 18, 92, 46]
++player0 has discarded a 58 to bag B
++player0 hand is [21, 93, 97, 60, 87, 65, 18, 92, 46]
++player0 has drawn a 8 from bag Y
++player0 hand is [21, 93, 97, 60, 87, 65, 18, 92, 46, 8]
++player0 has discarded a 18 to bag B
++player0 hand is [21, 93, 97, 60, 87, 65, 92, 46, 8]
++player0 has drawn a 92 from bag Y
++player0 hand is [21, 93, 97, 60, 87, 65, 92, 46, 8, 92]
++player0 has discarded a 65 to bag B
++player0 hand is [21, 93, 97, 60, 87, 92, 46, 8, 92]
++player0 has drawn a 33 from bag Z
++player0 hand is [21, 93, 97, 60, 87, 92, 46, 8, 92, 33]
++player0 has discarded a 97 to bag C
++player0 hand is [21, 93, 60, 87, 92, 46, 8, 92, 33]
++player0 has drawn a 63 from bag Z
++player0 hand is [21, 93, 60, 87, 92, 46, 8, 92, 33, 63]
++player0 has discarded a 63 to bag C
++player0 hand is [21, 93, 60, 87, 92, 46, 8, 92, 33]
++
+Index: .idea/modules.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/modules.xml b/.idea/modules.xml
+new file mode 100644
+--- /dev/null	(date 1636492482143)
++++ b/.idea/modules.xml	(date 1636492482143)
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectModuleManager">
++    <modules>
++      <module fileurl="file://$PROJECT_DIR$/PebbleGame.iml" filepath="$PROJECT_DIR$/PebbleGame.iml" />
++    </modules>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+new file mode 100644
+--- /dev/null	(date 1636492482145)
++++ b/.idea/vcs.xml	(date 1636492482145)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="VcsDirectoryMappings">
++    <mapping directory="" vcs="Git" />
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+new file mode 100644
+--- /dev/null	(date 1636492482147)
++++ b/.idea/misc.xml	(date 1636492482147)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectRootManager" version="2" project-jdk-name="openjdk-17" project-jdk-type="JavaSDK">
++    <output url="file://$PROJECT_DIR$/out" />
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/runConfigurations.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/runConfigurations.xml b/.idea/runConfigurations.xml
+new file mode 100644
+--- /dev/null	(date 1636492482148)
++++ b/.idea/runConfigurations.xml	(date 1636492482148)
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="RunConfigurationProducerService">
++    <option name="ignoredProducers">
++      <set>
++        <option value="com.android.tools.idea.compose.preview.runconfiguration.ComposePreviewRunConfigurationProducer" />
++      </set>
++    </option>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/.gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+new file mode 100644
+--- /dev/null	(date 1636492482150)
++++ b/.idea/.gitignore	(date 1636492482150)
+@@ -0,0 +1,8 @@
++# Default ignored files
++/shelf/
++/workspace.xml
++# Editor-based HTTP Client requests
++/httpRequests/
++# Datasource local storage ignored files
++/dataSources/
++/dataSources.local.xml
