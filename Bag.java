@@ -43,12 +43,4 @@ public class Bag{
     public char getBagLetter(){
         return letter;
     }
-    public static void bagFill(Bag whitebag, Bag blackbag){
-        //Loop over every pebble in whitebag
-        for(Pebble pebble:whitebag.getPebbles()){
-            blackbag.addPebble(pebble);
-        }
-        //clear white bag arraylist
-        whitebag.getPebbles().clear();
-    }
 }

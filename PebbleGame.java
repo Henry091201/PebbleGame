@@ -39,6 +39,9 @@ public class PebbleGame {
             pebbleArrayList.remove(pebble);
             runningTotal -= pebble.getWeight();
         }
+        public static CopyOnWriteArrayList<Player> getPlayers(){
+            return players;
+        }
         public synchronized void drawTen() throws IOException {
 
             Pebble chosenPebble;
@@ -215,6 +218,10 @@ public class PebbleGame {
             // input the file
             System.out.println("Please enter the location of bag number " + i + " to load:");
             String filename = input.next();
+            if(filename.equals("E")){
+                System.out.println("Quitting");
+                System.exit(0);
+            }
 
             File file = new File(filename);
 
