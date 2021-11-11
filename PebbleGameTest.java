@@ -1,8 +1,10 @@
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -15,10 +17,10 @@ public class PebbleGameTest {
 
 
     @BeforeEach
-    public void setUp(){
+    public void setup(){
 
     }
-    @After
+    @AfterEach
     public void tearDown(){     // Clears bag arrays when tests finish
         Bag.getBlackBags().clear();
         Bag.getWhiteBags().clear();
@@ -64,15 +66,4 @@ public class PebbleGameTest {
         assertEquals(3, PebbleGame.Player.getPlayers().size());
         assertEquals(false, PebbleGame.Player.getPlayers().size() == 4);
     }
-
-
-
-    @Test
-    void addPebble() {
-        Pebble pebble = new Pebble(15);
-        PebbleGame.addPlayer(10);
-        PebbleGame.Player.getPlayers().get(0).addPebble(pebble);
-    }
-
-
 }

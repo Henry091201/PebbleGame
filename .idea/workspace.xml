@@ -10,33 +10,37 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a71695a6-caa6-4a9f-a3b1-d23572b79761" name="Changes" comment="testing">
-      <change afterPath="$PROJECT_DIR$/.idea/artifacts/PebbleGame2_jar.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/META-INF/MANIFEST.MF" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/PebbleGameTestSuite.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/BagTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PebbleGameTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PebbleGameTestSuite.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PebbleTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/apiguardian-api-1.1.0.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/junit-jupiter-5.7.0.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/junit-jupiter-api-5.7.0.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/junit-jupiter-engine-5.7.0.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/junit-jupiter-params-5.7.0.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/junit-platform-commons-1.7.0.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/junit-platform-engine-1.7.0.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/opentest4j-1.2.0.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/artifacts/PebbleGame2_jar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/artifacts/PebbleGame2_jar.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Bag.class" beforeDir="false" afterPath="$PROJECT_DIR$/Bag.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pebble.class" beforeDir="false" afterPath="$PROJECT_DIR$/Pebble.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PebbleGame$Player.class" beforeDir="false" afterPath="$PROJECT_DIR$/PebbleGame$Player.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PebbleGame.class" beforeDir="false" afterPath="$PROJECT_DIR$/PebbleGame.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PebbleGame.java" beforeDir="false" afterPath="$PROJECT_DIR$/PebbleGame.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PebbleGame2.iml" beforeDir="false" afterPath="$PROJECT_DIR$/PebbleGame.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Player Outputs/player0_output.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Player Outputs/player1_output.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Player Outputs/player2_output.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Player Outputs/player3_output.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/PebbleGame2/Bag.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/PebbleGame2/Pebble.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/PebbleGame2/PebbleGame$Player.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/PebbleGame2/PebbleGame.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/PebbleGame2/tests/testFiles/example_file_1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame2/BagTest.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame2/PebbleGameTest$PlayerTest.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame2/PebbleGameTest.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame2/PebbleTest.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame2/testFiles/example_file_1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PebbleGameTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/tests/PebbleGameTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testFiles/example_file_1.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Bag.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Bag.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PebbleGame.iml" beforeDir="false" afterPath="$PROJECT_DIR$/PebbleGame.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PebbleGameTest.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PebbleTest.txt" beforeDir="false" afterPath="$PROJECT_DIR$/PebbleTest.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/.idea/artifacts/PebbleGame2_jar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/out/test/PebbleGame/.idea/artifacts/PebbleGame2_jar.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/Bag.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/test/PebbleGame/Bag.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/BagTest.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/test/PebbleGame/BagTest.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/PebbleGame.iml" beforeDir="false" afterPath="$PROJECT_DIR$/out/test/PebbleGame/PebbleGame.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/PebbleGameTest.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/test/PebbleGame/PebbleGameTest.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/PebbleGameTest.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/PebbleGameTestSuite.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/test/PebbleGame/PebbleGameTestSuite.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/PebbleTest.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/test/PebbleGame/PebbleTest.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/test/PebbleGame/PebbleTest.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/test/PebbleGame/PebbleTest.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/BagTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/PebbleGameTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/PebbleGameTestSuite.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/PebbleTest.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,6 +51,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="JUnit4 Test Class" />
+        <option value="JUnit5 Test Class" />
         <option value="Class" />
       </list>
     </option>
@@ -76,8 +81,9 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary" value="JUnit4" />
+    <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary" value="JUnit5" />
     <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4" value="" />
+    <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit5" value="" />
     <property name="last_directory_selection" value="$PROJECT_DIR$" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/tests/testFiles" />
     <property name="node.js.detected.package.eslint" value="true" />
@@ -85,13 +91,14 @@
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="nodejs_package_manager_path" value="npm" />
-    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.last.edited" value="Problems" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.1150748" />
     <property name="settings.editor.selected.configurable" value="advanced.settings" />
   </component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
+      <recent name="tests" />
       <recent name="" />
     </key>
     <key name="CopyFile.RECENT_KEYS">
@@ -108,11 +115,20 @@
       <recent name="testFiles" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.PebbleGameTestSuite">
+  <component name="RunManager" selected="JUnit.PebbleGameTestSuite (1)">
     <configuration name="BagTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="PebbleGame" />
       <option name="PACKAGE_NAME" value="" />
       <option name="MAIN_CLASS_NAME" value="BagTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="BagTest1" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="PebbleGame" />
+      <option name="PACKAGE_NAME" value="" />
+      <option name="MAIN_CLASS_NAME" value="BagTest1" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -127,7 +143,7 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PebbleGameTestSuite" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="PebbleGameTestSuite (1)" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="PebbleGame" />
       <option name="PACKAGE_NAME" value="" />
       <option name="MAIN_CLASS_NAME" value="PebbleGameTestSuite" />
@@ -136,12 +152,17 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PebbleGameTest.fillBagTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="PebbleGameTestSuite" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="PebbleGame" />
-      <option name="PACKAGE_NAME" value="" />
-      <option name="MAIN_CLASS_NAME" value="PebbleGameTest" />
-      <option name="METHOD_NAME" value="fillBagTest" />
-      <option name="TEST_OBJECT" value="method" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value=".*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="tests" />
+      <option name="MAIN_CLASS_NAME" value="tests.PebbleGameTestSuite" />
+      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -155,26 +176,13 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="PebbleGame" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
-      <module name="PebbleGame" />
-      <option name="filePath" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.PebbleGameTestSuite" />
+        <item itemvalue="JUnit.PebbleGameTestSuite (1)" />
         <item itemvalue="JUnit.PebbleGameTest" />
         <item itemvalue="JUnit.BagTest" />
         <item itemvalue="JUnit.PebbleTest" />
-        <item itemvalue="JUnit.PebbleGameTest.fillBagTest" />
+        <item itemvalue="JUnit.BagTest1" />
       </list>
     </recent_temporary>
   </component>
@@ -190,7 +198,8 @@
       <workItem from="1636493906758" duration="110000" />
       <workItem from="1636494028206" duration="12345000" />
       <workItem from="1636576920672" duration="571000" />
-      <workItem from="1636577507838" duration="29115000" />
+      <workItem from="1636577507838" duration="30231000" />
+      <workItem from="1636613818129" duration="3723000" />
     </task>
     <task id="LOCAL-00001" summary="idk">
       <created>1636577321156</created>
@@ -220,7 +229,21 @@
       <option name="project" value="LOCAL" />
       <updated>1636604598537</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="testing">
+      <created>1636612963343</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1636612963343</updated>
+    </task>
+    <task id="LOCAL-00006" summary="testing">
+      <created>1636612974871</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1636612974871</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

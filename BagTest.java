@@ -1,8 +1,9 @@
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,8 +19,8 @@ public class BagTest {
      * Puts 100 pebbles in it, each weight 1.
      */
 
-    @BeforeEach
-    public void setUp(){
+    @Before
+    public void setup(){
         bag = new Bag("black", 'X');
         bag.addPebble(new Pebble(100));
         bag.addPebble(new Pebble(50));
