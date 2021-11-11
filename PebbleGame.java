@@ -348,14 +348,10 @@ public class PebbleGame {
         }
 
     }
-
-
-
     // Takes a bag object and uses a Str[] to fill it with weights
     public static void fillBag(Bag bag, String[] weights) {
 
         int weight;
-
         // iterate through the array
         for (String s : weights) {
             weight = Integer.parseInt(s);

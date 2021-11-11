@@ -13,53 +13,51 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class PebbleGameTest {
 
-    PebbleGame game = new PebbleGame();
-
-
 
     @BeforeEach
     public void setUp(){
 
     }
     @After
-    public void tearDown(){
+    public void tearDown(){     // Clears bag arrays when tests finish
         Bag.getBlackBags().clear();
         Bag.getWhiteBags().clear();
+        PebbleGame.Player.getPlayers().clear();
     }
 
     @Test
-    public void validateWeightTest(){
+    public void TestValidateWeight(){
         String weights = "1,2,3,4,54,7,8,9,0";
-        assertEquals(true, PebbleGame.validateWeights(weights));
+        assertEquals(true, PebbleGame.validateWeights(weights));    // When it follows format
         String willFail = "hello,244,sup ";
-        assertEquals(false, PebbleGame.validateWeights(willFail));
+        assertEquals(false, PebbleGame.validateWeights(willFail));  //When it doesn't
     }
 
     @Test
-    public void setUpBagsTest(){
+    public void TestSetUpBags(){
         PebbleGame.setupBags();
-        assertEquals(true, Bag.getBlackBags().size() == 3);
+        assertEquals(true, Bag.getBlackBags().size() == 3); //Sets up the black bags correctly
         assertEquals(true, Bag.getWhiteBags().size() == 3);
 
     }
     @Test
-    public void fillBagTest(){
+    public void TestFillBag(){
         Bag blackBag = new Bag("black", 'X');
         String[] weights = new String[3];
         weights[0] = "1";
         weights[1] = "2";
         weights[2] = "3";
         PebbleGame.fillBag(blackBag, weights);
-        assertEquals(3, blackBag.getPebbles().size());
+        assertEquals(3, blackBag.getPebbles().size());  //Fills bag correctly
         weights[0] = "-1";
         try {
-            PebbleGame.fillBag(blackBag, weights);
+            PebbleGame.fillBag(blackBag, weights);  //Throws error if there is a negative weight
             fail("Should have caught a runtime exception for the negative weights");
         }catch (RuntimeException e){
         }
     }
     @Test
-    public void addPlayersTest(){
+    public void TestAddPlayers(){
         PebbleGame.addPlayer(1);
         PebbleGame.addPlayer(2);
         PebbleGame.addPlayer(3);
@@ -68,19 +66,13 @@ public class PebbleGameTest {
     }
 
 
-    public class PlayerTest {
 
-
-        @BeforeEach
-        public void setup() {
-            PebbleGame.Player player = new PebbleGame.Player(1);
-            Bag bag;
-            PebbleGame game = new PebbleGame();
-        }
-
-        @Test
-        public void addPebbleTest(){
-
-        }
+    @Test
+    void addPebble() {
+        Pebble pebble = new Pebble(15);
+        PebbleGame.addPlayer(10);
+        PebbleGame.Player.getPlayers().get(0).addPebble(pebble);
     }
+
+
 }
