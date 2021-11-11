@@ -67,16 +67,20 @@ public class PebbleGameTest {
         assertEquals(false, PebbleGame.Player.getPlayers().size() == 4);
     }
 
+
     public class PlayerTest {
 
-        PebbleGame.Player player = new PebbleGame.Player(1);
-        Bag bag;
-        PebbleGame game = new PebbleGame();
 
         @BeforeEach
         public void setup() {
-
+            PebbleGame.Player player = new PebbleGame.Player(1);
+            Bag bag;
+            PebbleGame game = new PebbleGame();
         }
 
+        @Test
+        public void addPebbleTest(){
+
+        }
     }
 }
