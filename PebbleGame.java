@@ -11,13 +11,18 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.*;
 
+// Pebble game class
 public class PebbleGame {
+
+    // PebbleGame attributes
     public static final Scanner input = new Scanner(System.in);
     public static String[] output;  //Where each players output will be written to
     private  volatile static boolean gameWon;
 
+    // Player class
     public static class Player implements Runnable{
 
+        // Player attributes
         private static final CopyOnWriteArrayList<Player> players = new CopyOnWriteArrayList<>();
         private final int id;
         private  volatile ArrayList<Pebble> pebbleArrayList = new ArrayList<>();
@@ -29,12 +34,16 @@ public class PebbleGame {
             this.id = id;
         }
 
-        //Methods
+        // add a player to the game
         public void addPlayer(int id){players.add(new Player(id));}
+
+        // adds a pebble to the player's list of pebbles and add the weight to the sum
         public void addPebble(Pebble pebble){
             pebbleArrayList.add(pebble);
             runningTotal += pebble.getWeight();
         }
+
+        // removes a pebble from the player's list of pebbles and substracts its weight from the sum
         public void removePebble(Pebble pebble){
             pebbleArrayList.remove(pebble);
             runningTotal -= pebble.getWeight();
@@ -42,6 +51,8 @@ public class PebbleGame {
         public static CopyOnWriteArrayList<Player> getPlayers(){
             return players;
         }
+
+        // makes the player draw ten pebble
         public synchronized void drawTen() throws IOException {
 
             Pebble chosenPebble;
@@ -49,28 +60,35 @@ public class PebbleGame {
             //pick a random black bag
             Random rand = new Random();
             int bagNumber = rand.nextInt(3);
-            Bag blackBag = Bag.getBlackBags().get(bagNumber);   // Picks the random black bag
-            while(blackBag.getPebbles().size() < 10){           //Loops until it finds a black bag with enough pebbles in
+            // Picks the random black bag
+            Bag blackBag = Bag.getBlackBags().get(bagNumber);
+            //Loops until it finds a black bag with enough pebbles in
+            while(blackBag.getPebbles().size() < 10){
                 bagNumber = rand.nextInt(3);
                 blackBag = Bag.getBlackBags().get(bagNumber);
             }
 
-            for(int i = 0; i < 10; i++){        // Select the ten pebbles randomly
+            // Select the ten pebbles randomly
+            for(int i = 0; i < 10; i++){
                 synchronized (blackBag){
-                    chosenPebble = blackBag.getPebbles().get(rand.nextInt(Bag.getSize(blackBag)));  //select the pebble
-                    Bag.removePebble(blackBag, chosenPebble);   //remove the pebble from black bag
+                    //select the pebble
+                    chosenPebble = blackBag.getPebbles().get(rand.nextInt(Bag.getSize(blackBag)));
+                    //remove the pebble from black bag
+                    Bag.removePebble(blackBag, chosenPebble);
                 }
-                addPebble(chosenPebble); // adds pebble to player
+                // adds pebble to player
+                addPebble(chosenPebble);
                 lastBag = blackBag;
                 output[id] = "player" + id + " has drawn a "+ chosenPebble.getWeight() + " from bag "+blackBag.getBagLetter() + '\n';
                 printOutputs(id);
                 output[id] = "player" + id+" hand is " + pebbleArrayList.toString() + "\n";
                 printOutputs(id);
             }
+            // checks if the player has already won
             checkWin();
         }
 
-
+        // draws a random pebble from a random bag
         public void draw() throws InterruptedException {
             // Randomly pick black bag
             //check all the bags arn't empty
@@ -78,19 +96,27 @@ public class PebbleGame {
             Bag blackBagObj = Bag.getBlackBags().get(bagNum);
             Bag whiteBagObj = Bag.getWhiteBags().get(bagNum);
             CopyOnWriteArrayList<Pebble> blackBag = new CopyOnWriteArrayList<>();
-            while(true){        //Checks if a bag is empty before drawing
+
+            //Checks if a bag is empty before drawing
+            while(true){
                 blackBag = Bag.getBlackBags().get(bagNum).getPebbles();
                 CopyOnWriteArrayList<Pebble> whiteBag = Bag.getWhiteBags().get(bagNum).getPebbles();
+                // if it's empty
                 if(blackBag.size() == 0){
+                    // adds the contents of the white bag to the black bag
                     blackBag.addAll(whiteBag);
                     output[id] = "Filling bag " + blackBagObj.getBagLetter()+ " with bag " +whiteBagObj.getBagLetter() + "\n";
                     printOutputs(id);
+                    // empties the whitebag
                     whiteBag.clear();
                 }
+                // if its not empty
                 else {break;}
             }
-            synchronized (blackBag){    //In case you try and draw from an empty bag
-                if(blackBag.size() < 1){
+
+            synchronized (blackBag){
+                //In case you try and draw from an empty bag
+                if(blackBag.size() < 1) {
                     draw();
                 }
                 int pebbleIndex = ThreadLocalRandom.current().nextInt(0, blackBag.size());
@@ -109,11 +135,14 @@ public class PebbleGame {
             Thread.sleep((long)(Math.random() * 50));
             checkWin();
         }
+
+        // discard a random pebble
         public void discard(){
-            //Remove the pebble from the player
+            // pick a random pebble
             Random random = new Random();
             int indexPebble = random.nextInt(pebbleArrayList.size());
             Pebble chosenPebble = pebbleArrayList.get(indexPebble);
+            // remove it from the pebble
             removePebble(chosenPebble);
             // adds it to the corresponding white bag
             Bag whiteBag = switch (lastBag.getBagLetter()) {
@@ -122,6 +151,7 @@ public class PebbleGame {
                 case 'Z' -> Bag.getWhiteBags().get(2);
                 default -> throw new IllegalStateException("Unexpected value: " + lastBag.getBagLetter());
             };
+            // adds the random pebble to the white bag
             synchronized (whiteBag){
                 whiteBag.addPebble(chosenPebble);
                 output[id] = "player" +id+ " has discarded a "+ chosenPebble.toString() + " to bag " +whiteBag.getBagLetter() + "\n";
@@ -129,9 +159,13 @@ public class PebbleGame {
                 output[id] = "player" + id+" hand is " + pebbleArrayList.toString() + "\n";
                 printOutputs(id);
             }
+            // check if the player has won
             checkWin();
         }
+
+        // Check if the player has won
         public void checkWin(){
+            // if he player has 10 pebbles and their weight is 100
             if(pebbleArrayList.size() == 10 && runningTotal == 100){
                     gameWon = true;
                     System.out.println("Player" +id+ " has won the game!!!!");
@@ -140,11 +174,13 @@ public class PebbleGame {
             }
         }
 
-
+        // run method for thread
         public void run(){
             try {
                 System.out.println("Player" + id + " is starting");
+                // player draws 10 pebbles
                 drawTen();
+                // keeps looping until the player has won
                 while (!gameWon){
                     discard();
                     draw();
@@ -157,19 +193,14 @@ public class PebbleGame {
         }
     }
 
+    // adds a player to the static arraylist of players
     public static void addPlayer(int id) {
         PebbleGame.Player.players.add(new Player(id));
     }
 
     //Read file Method
 
-    /**
-     * Takes the name of the file for a black bag. Validates the content format with validateWeights method.
-     * Checks there are 11 times the amount of pebbles than players.
-     * @param filename name of black bag input file
-     * @return a Str[] containing all the weights of pebbles
-     * @throws IOException TODO: Catch it
-     */
+    // creates and verifies the file
     public static String[] addFile(String filename) {
 
         String line = null;
@@ -218,10 +249,6 @@ public class PebbleGame {
             // input the file
             System.out.println("Please enter the location of bag number " + i + " to load:");
             String filename = input.next();
-            if(filename.equals("E")){
-                System.out.println("Quitting");
-                System.exit(0);
-            }
 
             File file = new File(filename);
 
@@ -254,11 +281,7 @@ public class PebbleGame {
         input.close();
     }
 
-    /**
-     * Checks the file follows the correct format
-     * @param line
-     * @return Bool. True if follows correct format
-     */
+    // checks the file is in the correct format
     public static Boolean validateWeights(String line) {
         //Checks file content is in the correct format
         if (line.matches("(\\d+(,)?\\s?)+")) {
@@ -269,9 +292,8 @@ public class PebbleGame {
         }
     }
 
-    /**
-     * Adds all the white and black bags to the arrays
-     */
+
+    //Adds all the white and black bags to the arrays
     public static void setupBags(){
         // Add the black bags to the array
         Bag.setBlackBags(new Bag("black", 'X'));
@@ -282,13 +304,17 @@ public class PebbleGame {
         Bag.setWhiteBags(new Bag("white", 'B'));
         Bag.setWhiteBags(new Bag("white", 'C'));
     }
-    public static void setupPlayers(){
-        //input the amount of player
 
+    // create all the player
+    public static void setupPlayers(){
+
+        //input the amount of player
         System.out.println("Please enter the number of players:");
 
+        // if valid input
         if(input.hasNextInt()){
             try{
+
                 int number = input.nextInt();
                 // Checks the input is strictly positive
                 while(number < 1){
@@ -305,11 +331,13 @@ public class PebbleGame {
                 System.out.println("Please only enter numbers ");
                 setupPlayers();
             }
-
+        // if invalid input
         }else {
             if(input.hasNext()){
                 String err = input.nextLine();
+                // if the user inputs "E"
                 if(err.equals("E")){
+                    // quit the game
                     System.out.println("Quitting");
                     System.exit(0);
                 }else {
@@ -323,11 +351,7 @@ public class PebbleGame {
 
 
 
-    /**
-     * Takes a bag object and uses a Str[] to fill it with weights
-     * @param bag bag object (should be black)
-     * @param weights String list filled with string type integers separated by commas
-     */
+    // Takes a bag object and uses a Str[] to fill it with weights
     public static void fillBag(Bag bag, String[] weights) {
 
         int weight;
@@ -341,10 +365,12 @@ public class PebbleGame {
             bag.addPebble(new Pebble(weight));
         }
     }
+
+    // write the outputs to the file
     public static void printOutputs(int id) {
 
         try {
-            // Writes the output files to the directory
+                // Writes the output files to the directory
                 File yourFile = new File("Player Outputs/player" + id + "_output.txt");
                 yourFile.createNewFile();
                 Path path = Paths.get("Player Outputs/player" + id + "_output.txt");
@@ -355,6 +381,8 @@ public class PebbleGame {
             e.printStackTrace();
         }
     }
+
+    // main method
     public static void main(String[] args) throws IOException {
 
         // Creates the white and Black Bags
@@ -366,6 +394,7 @@ public class PebbleGame {
         System.out.println("The game will then be simulated, and written to files in this directory.\n");
         // Asks for player number and creates the player objects
         setupPlayers();
+        // creates the bag
         askForBags();
         // Creates new directory for the outputs
         File dirLocation = new File("Player Outputs/");
@@ -376,8 +405,11 @@ public class PebbleGame {
             }
         }
 
+        // creates the thread pool
         ExecutorService es = Executors.newFixedThreadPool(Player.players.size());
+        // loop through the players
         for (int i = 0; i < Player.players.size(); i++) {
+            // create the thread
             Thread player = new Thread(new Player(i));
             es.execute(new Thread(player));
         }

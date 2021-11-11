@@ -7,10 +7,7 @@ public class BagTest {
 
     Bag bag;
 
-    /**
-     * This method initialises the Bag
-     * Puts 100 pebbles in it, each weight 1.
-     */
+    // initialises the bag
     @BeforeEach
     public void setUp() {
         bag = new Bag("black",'X');
@@ -21,25 +18,19 @@ public class BagTest {
 
     }
 
-    /**
-     * test getBagLetter
-     */
+    // tests getBagLetter()
     @Test
     public void testLetter() {
         assertEquals('X',bag.getBagLetter());
     }
 
-    /**
-     * tests getSize()
-     */
+    // tests getSize()
     @Test
     public void testSize() {
         assertEquals(100, bag.getSize(bag));
     }
 
-    /**
-     * tests testAddPebble()
-     */
+    // tests addPeople()
     @Test
     public void testAddPebble() {
         Pebble pebble = new Pebble(1);
@@ -50,6 +41,7 @@ public class BagTest {
         assertEquals(true, bag.getPebbles().get(bag.getSize(bag)-1).equals(pebble));
     }
 
+    // tests removePebble()
     @Test
     public void testRemovePebble() {
         Pebble pebble = new Pebble(1);
